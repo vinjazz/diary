@@ -28,15 +28,6 @@
             --shadow-hover: 0 12px 40px rgba(46, 125, 50, 0.25);
         }
 
-        function useOfflineMode() {
-            hideAuthModal();
-            currentUser = null;
-            isOnlineMode = false;
-            hideUserInfo();
-            showAnimatedToast('💾 Modalità offline attivata. I dati saranno salvati localmente.', 'info');
-            updateDisplay();
-        }
-
         * {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -808,6 +799,9 @@
                     <button class="btn btn-outline-light btn-sm m-1" onclick="generateSampleData()">
                         <i class="fas fa-magic"></i> <span class="d-none d-md-inline">Demo</span>
                     </button>
+                    <button class="btn btn-outline-light btn-sm m-1" onclick="testDatabaseConnection()" title="Testa connessione database">
+                        <i class="fas fa-database"></i> <span class="d-none d-md-inline">Test DB</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -1171,9 +1165,8 @@
         // 3. Vai in Settings > API
         // 4. Copia URL e anon key qui sotto
         
-           const SUPABASE_URL = 'https://bazlalyalcfwenvwlpxe.supabase.co';
+          const SUPABASE_URL = 'https://bazlalyalcfwenvwlpxe.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhemxhbHlhbGNmd2VudndscHhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExOTkzNzMsImV4cCI6MjA2Njc3NTM3M30.UgQjmNAi-rfo7nvblLH8IhaXuRBnaO1snV8mi_0EOKA';
-        
         
         let supabase = null;
         let dbConnected = false;
@@ -1186,33 +1179,60 @@
             try {
                 supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 console.log('✅ Supabase client creato');
+                console.log('🔗 URL:', SUPABASE_URL);
+                console.log('🔑 Key:', SUPABASE_ANON_KEY.substring(0, 20) + '...');
                 
-                // Test connessione
-                supabase.from('fertilization_records').select('count', { count: 'exact', head: true })
-                    .then(({ error }) => {
+                // Test connessione migliorato
+                const testConnection = async () => {
+                    try {
+                        // Prima prova a verificare se l'auth funziona
+                        const { data: { user }, error: authError } = await supabase.auth.getUser();
+                        console.log('🔐 Test auth:', authError ? 'ERRORE' : 'OK');
+                        
+                        // Poi prova la tabella
+                        const { data, error } = await supabase
+                            .from('fertilization_records')
+                            .select('id')
+                            .limit(1);
+                            
                         if (error) {
                             console.error('❌ Errore connessione database:', error.message);
+                            console.error('📋 Dettagli errore:', error);
+                            
                             if (error.message.includes('relation "fertilization_records" does not exist')) {
-                                console.error('📋 TABELLA MANCANTE! Crea la tabella nel database.');
-                                showAnimatedToast('📋 Database: tabella mancante! Consulta le istruzioni.', 'error');
+                                console.error('📋 TABELLA MANCANTE! La tabella fertilization_records non esiste.');
+                                showAnimatedToast('📋 Tabella database mancante! Vai su Supabase e crea la tabella.', 'error');
+                            } else if (error.message.includes('Invalid API key')) {
+                                console.error('🔐 CHIAVE API NON VALIDA!');
+                                showAnimatedToast('🔐 Chiave API non valida! Verifica le credenziali.', 'error');
+                            } else if (error.message.includes('JWT')) {
+                                console.error('🔐 PROBLEMA JWT - credenziali non valide');
+                                showAnimatedToast('🔐 Credenziali non valide! Verifica URL e chiave.', 'error');
                             } else {
-                                console.error('🔐 CREDENZIALI ERRATE o problema connessione');
-                                showAnimatedToast('🔐 Verifica le credenziali del database!', 'error');
+                                console.error('❌ ERRORE SCONOSCIUTO:', error.message);
+                                showAnimatedToast('❌ Errore database: ' + error.message, 'error');
                             }
                             dbConnected = false;
                         } else {
                             console.log('✅ Database connesso correttamente!');
+                            console.log('📊 Test query riuscita:', data);
                             dbConnected = true;
+                            showAnimatedToast('✅ Database connesso con successo!', 'success');
                         }
-                    })
-                    .catch(err => {
-                        console.error('❌ Errore test connessione:', err);
+                    } catch (exception) {
+                        console.error('❌ Eccezione durante test connessione:', exception);
                         dbConnected = false;
-                    });
+                        showAnimatedToast('❌ Errore di rete o configurazione!', 'error');
+                    }
+                };
+                
+                // Esegui test dopo un breve delay
+                setTimeout(testConnection, 500);
                     
             } catch (error) {
                 console.error('❌ Errore inizializzazione Supabase:', error);
                 supabase = null;
+                showAnimatedToast('❌ Errore inizializzazione database!', 'error');
             }
         } else {
             console.log('💾 Database non configurato - modalità offline attiva');
@@ -1760,6 +1780,76 @@ CREATE POLICY "Users can manage their own records" ON fertilization_records
             `;
             
             document.body.insertAdjacentHTML('beforeend', modalHTML);
+        }
+
+        function useOfflineMode() {
+            hideAuthModal();
+            currentUser = null;
+            isOnlineMode = false;
+            hideUserInfo();
+            showAnimatedToast('💾 Modalità offline attivata. I dati saranno salvati localmente.', 'info');
+            updateDisplay();
+        }
+
+        async function testDatabaseConnection() {
+            if (!supabase) {
+                showAnimatedToast('❌ Database non configurato!', 'error');
+                setTimeout(() => {
+                    showDatabaseSetupInstructions();
+                }, 1000);
+                return;
+            }
+            
+            showAnimatedToast('🔄 Test connessione in corso...', 'info');
+            
+            try {
+                console.log('🧪 Inizio test connessione manuale...');
+                
+                // Test 1: Verifica autenticazione
+                const { data: { user }, error: authError } = await supabase.auth.getUser();
+                console.log('🔐 Test auth:', authError ? 'ERRORE' : 'OK', authError?.message || '');
+                
+                // Test 2: Verifica tabella
+                console.log('📋 Test accesso tabella...');
+                const { data, error } = await supabase
+                    .from('fertilization_records')
+                    .select('id')
+                    .limit(1);
+                    
+                if (error) {
+                    console.error('❌ Errore test tabella:', error);
+                    
+                    if (error.message.includes('relation "fertilization_records" does not exist')) {
+                        showAnimatedToast('📋 TABELLA MANCANTE! Crea la tabella nel database.', 'error');
+                        setTimeout(() => {
+                            showDatabaseSetupInstructions();
+                        }, 2000);
+                    } else if (error.message.includes('Invalid API key') || error.message.includes('JWT')) {
+                        showAnimatedToast('🔐 CREDENZIALI NON VALIDE! Verifica URL e chiave API.', 'error');
+                    } else {
+                        showAnimatedToast('❌ Errore: ' + error.message, 'error');
+                    }
+                    
+                    dbConnected = false;
+                } else {
+                    console.log('✅ Test completato con successo!');
+                    showAnimatedToast('✅ Database connesso correttamente!', 'success');
+                    dbConnected = true;
+                    
+                    // Aggiorna stato UI se connesso
+                    const offlineStatus = document.getElementById('offlineStatus');
+                    const onlineStatus = document.getElementById('onlineStatus');
+                    if (offlineStatus) offlineStatus.classList.add('d-none');
+                    if (onlineStatus) onlineStatus.classList.remove('d-none');
+                }
+                
+            } catch (exception) {
+                console.error('❌ Eccezione durante test:', exception);
+                showAnimatedToast('❌ Errore di rete: ' + exception.message, 'error');
+                dbConnected = false;
+            }
+            
+            console.log('📊 Risultato test - dbConnected:', dbConnected);
         }
 
         // Detect mobile resize
