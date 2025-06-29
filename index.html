@@ -28,6 +28,15 @@
             --shadow-hover: 0 12px 40px rgba(46, 125, 50, 0.25);
         }
 
+        function useOfflineMode() {
+            hideAuthModal();
+            currentUser = null;
+            isOnlineMode = false;
+            hideUserInfo();
+            showAnimatedToast('💾 Modalità offline attivata. I dati saranno salvati localmente.', 'info');
+            updateDisplay();
+        }
+
         * {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -1155,13 +1164,58 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Configurazione Supabase - SOSTITUISCI QUESTI VALORI CON I TUOI!
-        const SUPABASE_URL = 'https://bazlalyalcfwenvwlpxe.supabase.co';
+        // 🔧 CONFIGURAZIONE DATABASE - SOSTITUISCI CON I TUOI VALORI!
+        // Per ottenere le credenziali:
+        // 1. Vai su https://supabase.com
+        // 2. Crea un nuovo progetto (gratuito)
+        // 3. Vai in Settings > API
+        // 4. Copia URL e anon key qui sotto
+        
+           const SUPABASE_URL = 'https://bazlalyalcfwenvwlpxe.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhemxhbHlhbGNmd2VudndscHhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExOTkzNzMsImV4cCI6MjA2Njc3NTM3M30.UgQjmNAi-rfo7nvblLH8IhaXuRBnaO1snV8mi_0EOKA';
         
+        
         let supabase = null;
-        if (SUPABASE_URL !== 'https://your-project-ref.supabase.co' && typeof window.supabase !== 'undefined') {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let dbConnected = false;
+        
+        // Controlla se le credenziali sono state configurate
+        if (SUPABASE_URL !== 'https://your-project-ref.supabase.co' && 
+            SUPABASE_ANON_KEY !== 'your-anon-key-here' && 
+            typeof window.supabase !== 'undefined') {
+            
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('✅ Supabase client creato');
+                
+                // Test connessione
+                supabase.from('fertilization_records').select('count', { count: 'exact', head: true })
+                    .then(({ error }) => {
+                        if (error) {
+                            console.error('❌ Errore connessione database:', error.message);
+                            if (error.message.includes('relation "fertilization_records" does not exist')) {
+                                console.error('📋 TABELLA MANCANTE! Crea la tabella nel database.');
+                                showAnimatedToast('📋 Database: tabella mancante! Consulta le istruzioni.', 'error');
+                            } else {
+                                console.error('🔐 CREDENZIALI ERRATE o problema connessione');
+                                showAnimatedToast('🔐 Verifica le credenziali del database!', 'error');
+                            }
+                            dbConnected = false;
+                        } else {
+                            console.log('✅ Database connesso correttamente!');
+                            dbConnected = true;
+                        }
+                    })
+                    .catch(err => {
+                        console.error('❌ Errore test connessione:', err);
+                        dbConnected = false;
+                    });
+                    
+            } catch (error) {
+                console.error('❌ Errore inizializzazione Supabase:', error);
+                supabase = null;
+            }
+        } else {
+            console.log('💾 Database non configurato - modalità offline attiva');
         }
 
         // Variabili globali
@@ -1176,16 +1230,23 @@
             supabase.auth.onAuthStateChange(async (event, session) => {
                 console.log('Auth state changed:', event, session?.user?.email);
                 currentUser = session?.user || null;
+                isOnlineMode = !!currentUser;
                 
                 if (currentUser) {
                     hideAuthModal();
                     showUserInfo();
-                    await loadUserRecords();
-                    showAnimatedToast(`👋 Benvenuto ${currentUser.email}!`, 'success');
+                    try {
+                        await loadUserRecords();
+                        showAnimatedToast(`👋 Benvenuto ${currentUser.email}!`, 'success');
+                    } catch (error) {
+                        console.error('Errore caricamento dati:', error);
+                        showAnimatedToast('⚠️ Errore nel caricamento dati, usando modalità offline', 'warning');
+                        isOnlineMode = false;
+                    }
                 } else {
-                    showAuthModal();
                     hideUserInfo();
-                    records = [];
+                    isOnlineMode = false;
+                    // Non cancellare i record in caso di logout, mantieni quelli locali
                     updateDisplay();
                 }
             });
@@ -1258,11 +1319,30 @@
         }
 
         async function signOut() {
-            if (!supabase) return;
-            
-            const { error } = await supabase.auth.signOut();
-            if (!error) {
+            if (!supabase || !currentUser) {
+                // Logout locale se non c'è database
+                currentUser = null;
+                isOnlineMode = false;
+                hideUserInfo();
                 showAnimatedToast('👋 Logout effettuato!', 'success');
+                return;
+            }
+            
+            try {
+                const { error } = await supabase.auth.signOut();
+                if (error) {
+                    console.error('Errore logout:', error);
+                    showAnimatedToast('❌ Errore durante il logout: ' + error.message, 'error');
+                } else {
+                    showAnimatedToast('👋 Logout effettuato con successo!', 'success');
+                }
+            } catch (err) {
+                console.error('Errore imprevisto logout:', err);
+                // Forza logout locale in caso di errore
+                currentUser = null;
+                isOnlineMode = false;
+                hideUserInfo();
+                showAnimatedToast('👋 Logout forzato completato!', 'warning');
             }
         }
 
@@ -1270,40 +1350,48 @@
         async function saveRecordToDatabase(record) {
             if (!supabase || !currentUser) {
                 console.log('Modalità offline: salvando localmente');
-                return { data: null, error: null };
+                return { data: null, error: { message: 'Modalità offline' } };
             }
 
-            const dbRecord = {
-                user_id: currentUser.id,
-                date: record.date,
-                week: record.week,
-                bottle1: record.fertilizers.bottle1,
-                bottle2: record.fertilizers.bottle2,
-                bottle3: record.fertilizers.bottle3,
-                bottle4: record.fertilizers.bottle4,
-                ec: record.parameters.ec,
-                po4: record.parameters.po4,
-                no2: record.parameters.no2,
-                no3: record.parameters.no3,
-                k: record.parameters.k,
-                ca: record.parameters.ca,
-                mg: record.parameters.mg,
-                ph: record.parameters.ph,
-                notes: record.notes
-            };
+            try {
+                const dbRecord = {
+                    user_id: currentUser.id,
+                    date: record.date,
+                    week: record.week,
+                    bottle1: record.fertilizers.bottle1,
+                    bottle2: record.fertilizers.bottle2,
+                    bottle3: record.fertilizers.bottle3,
+                    bottle4: record.fertilizers.bottle4,
+                    ec: record.parameters.ec,
+                    po4: record.parameters.po4,
+                    no2: record.parameters.no2,
+                    no3: record.parameters.no3,
+                    k: record.parameters.k,
+                    ca: record.parameters.ca,
+                    mg: record.parameters.mg,
+                    ph: record.parameters.ph,
+                    notes: record.notes
+                };
 
-            const { data, error } = await supabase
-                .from('fertilization_records')
-                .insert([dbRecord]);
+                console.log('Salvando nel database:', dbRecord);
 
-            if (error) {
-                console.error('Errore salvataggio database:', error);
-                showAnimatedToast('❌ Errore nel salvataggio database!', 'error');
-            } else {
-                showAnimatedToast('✅ Record salvato nel database!', 'success');
+                const { data, error } = await supabase
+                    .from('fertilization_records')
+                    .insert([dbRecord])
+                    .select();
+
+                if (error) {
+                    console.error('Errore salvataggio database:', error);
+                    return { data: null, error };
+                }
+
+                console.log('Record salvato con successo nel database:', data);
+                return { data, error: null };
+                
+            } catch (exception) {
+                console.error('Eccezione durante il salvataggio:', exception);
+                return { data: null, error: { message: exception.message } };
             }
-            
-            return { data, error };
         }
 
         async function loadUserRecords() {
@@ -1312,44 +1400,58 @@
                 return;
             }
 
-            const { data, error } = await supabase
-                .from('fertilization_records')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .order('date', { ascending: true });
+            try {
+                console.log('Caricamento dati dal database per utente:', currentUser.email);
+                
+                const { data, error } = await supabase
+                    .from('fertilization_records')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('date', { ascending: true });
 
-            if (error) {
-                console.error('Errore caricamento:', error);
-                showAnimatedToast('❌ Errore nel caricamento dati!', 'error');
-                return;
+                if (error) {
+                    console.error('Errore caricamento dal database:', error);
+                    showAnimatedToast('❌ Errore nel caricamento: ' + error.message, 'error');
+                    throw error;
+                }
+
+                console.log(`Caricati ${data?.length || 0} record dal database`);
+
+                // Converti formato database in formato app
+                if (data && data.length > 0) {
+                    records = data.map(record => ({
+                        id: record.id,
+                        date: record.date,
+                        week: record.week,
+                        fertilizers: {
+                            bottle1: record.bottle1 || 0,
+                            bottle2: record.bottle2 || 0,
+                            bottle3: record.bottle3 || 0,
+                            bottle4: record.bottle4 || 0
+                        },
+                        parameters: {
+                            ec: record.ec || 0,
+                            po4: record.po4 || 0,
+                            no2: record.no2 || 0,
+                            no3: record.no3 || 0,
+                            k: record.k || 0,
+                            ca: record.ca || 0,
+                            mg: record.mg || 0,
+                            ph: record.ph || 0
+                        },
+                        notes: record.notes || ''
+                    }));
+                } else {
+                    records = [];
+                }
+
+                updateDisplay();
+                
+            } catch (error) {
+                console.error('Eccezione durante il caricamento:', error);
+                showAnimatedToast('⚠️ Problema nel caricamento dati dal database', 'warning');
+                throw error;
             }
-
-            // Converti formato database in formato app
-            records = data.map(record => ({
-                id: record.id,
-                date: record.date,
-                week: record.week,
-                fertilizers: {
-                    bottle1: record.bottle1 || 0,
-                    bottle2: record.bottle2 || 0,
-                    bottle3: record.bottle3 || 0,
-                    bottle4: record.bottle4 || 0
-                },
-                parameters: {
-                    ec: record.ec || 0,
-                    po4: record.po4 || 0,
-                    no2: record.no2 || 0,
-                    no3: record.no3 || 0,
-                    k: record.k || 0,
-                    ca: record.ca || 0,
-                    mg: record.mg || 0,
-                    ph: record.ph || 0
-                },
-                notes: record.notes || ''
-            }));
-
-            updateDisplay();
-            console.log(`Caricati ${records.length} record dal database`);
         }
 
         async function deleteRecordFromDatabase(recordId) {
@@ -1508,6 +1610,10 @@
             if (offlineStatus) offlineStatus.classList.add('d-none');
             if (onlineStatus) onlineStatus.classList.remove('d-none');
             
+            // Rimuovi pulsante login se presente
+            const loginButton = document.getElementById('loginButton');
+            if (loginButton) loginButton.remove();
+            
             // Aggiunge info utente alla navbar
             const navbar = document.querySelector('.navbar .navbar-nav');
             if (navbar && !document.getElementById('userInfo')) {
@@ -1533,16 +1639,127 @@
             const userInfo = document.getElementById('userInfo');
             if (userInfo) {
                 userInfo.remove();
-                // Rimuovi anche il pulsante logout
-                const logoutBtn = document.querySelector('button[onclick="signOut()"]');
-                if (logoutBtn) logoutBtn.remove();
+            }
+            
+            // Rimuovi anche il pulsante logout
+            const logoutBtn = document.querySelector('button[onclick="signOut()"]');
+            if (logoutBtn) logoutBtn.remove();
+            
+            // Aggiungi pulsante login se c'è il database configurato
+            if (supabase) {
+                const navbar = document.querySelector('.navbar .navbar-nav');
+                if (navbar && !document.getElementById('loginButton')) {
+                    const loginButtonHTML = `
+                        <button class="btn btn-outline-light btn-sm" id="loginButton" onclick="showAuthModal()" style="border-radius: 50px; margin-right: 10px;">
+                            <i class="fas fa-sign-in-alt"></i> <span class="d-none d-md-inline">Login</span>
+                        </button>
+                    `;
+                    navbar.insertAdjacentHTML('afterbegin', loginButtonHTML);
+                }
             }
         }
 
-        function useOfflineMode() {
-            hideAuthModal();
-            showAnimatedToast('💾 Modalità offline attivata. I dati saranno salvati localmente.', 'info');
-            updateDisplay();
+        function showDatabaseSetupInstructions() {
+            // Crea modal con istruzioni se non esiste
+            if (!document.getElementById('setupModal')) {
+                createSetupModal();
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('setupModal'));
+            modal.show();
+        }
+
+        function createSetupModal() {
+            const modalHTML = `
+                <div class="modal fade" id="setupModal" tabindex="-1">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 2px solid rgba(76, 175, 80, 0.2); border-radius: 20px;">
+                            <div class="modal-header" style="background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%); border: none; border-radius: 20px 20px 0 0;">
+                                <h5 class="modal-title text-white">🚀 Configurazione Database (GRATUITO)</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <div class="alert alert-info">
+                                    <strong>💾 Attualmente in modalità OFFLINE</strong><br>
+                                    I tuoi dati sono salvati solo localmente. Configura il database per backup e sincronizzazione!
+                                </div>
+                                
+                                <h6>🔧 Passaggi per attivare il database:</h6>
+                                <ol style="line-height: 1.8;">
+                                    <li><strong>Vai su</strong> <a href="https://supabase.com" target="_blank" style="color: #4caf50;">https://supabase.com</a></li>
+                                    <li><strong>Crea account</strong> (Google/GitHub) - è gratuito!</li>
+                                    <li><strong>Clicca "New Project"</strong></li>
+                                    <li><strong>Compila:</strong>
+                                        <ul>
+                                            <li>Nome progetto: <code>aquafert-pro</code></li>
+                                            <li>Password database: <code>genera-password-sicura</code></li>
+                                            <li>Regione: Europe (più vicina)</li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Attendi 2-3 minuti</strong> per la creazione</li>
+                                    <li><strong>Vai in Settings > API</strong></li>
+                                    <li><strong>Copia:</strong>
+                                        <ul>
+                                            <li><strong>Project URL:</strong> <code>https://abc...supabase.co</code></li>
+                                            <li><strong>anon/public key:</strong> <code>eyJ...</code></li>
+                                        </ul>
+                                    </li>
+                                    <li><strong>Incolla nel codice HTML</strong> (righe 570-571)</li>
+                                    <li><strong>Crea tabella</strong> con questo comando SQL:</li>
+                                </ol>
+                                
+                                <div class="mt-3 p-3" style="background: #f5f5f5; border-radius: 10px; font-family: monospace; font-size: 12px;">
+<pre>CREATE TABLE fertilization_records (
+  id BIGSERIAL PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  user_id UUID REFERENCES auth.users NOT NULL,
+  date DATE NOT NULL,
+  week INTEGER NOT NULL,
+  bottle1 DECIMAL DEFAULT 0,
+  bottle2 DECIMAL DEFAULT 0,
+  bottle3 DECIMAL DEFAULT 0,
+  bottle4 DECIMAL DEFAULT 0,
+  ec DECIMAL DEFAULT 0,
+  po4 DECIMAL DEFAULT 0,
+  no2 DECIMAL DEFAULT 0,
+  no3 DECIMAL DEFAULT 0,
+  k DECIMAL DEFAULT 0,
+  ca DECIMAL DEFAULT 0,
+  mg DECIMAL DEFAULT 0,
+  ph DECIMAL DEFAULT 0,
+  notes TEXT
+);
+
+-- Permessi di sicurezza
+ALTER TABLE fertilization_records ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage their own records" ON fertilization_records
+  FOR ALL USING (auth.uid() = user_id);</pre>
+                                </div>
+                                
+                                <div class="alert alert-success mt-3">
+                                    <strong>✅ Vantaggi del database:</strong><br>
+                                    • 🔄 Sincronizzazione automatica<br>
+                                    • 📱 Accesso da più dispositivi<br>
+                                    • ☁️ Backup sicuro nel cloud<br>
+                                    • 🔐 Login con Google
+                                </div>
+                                
+                                <div class="text-center mt-4">
+                                    <button class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                        💾 Continua Offline
+                                    </button>
+                                    <a href="https://supabase.com" target="_blank" class="btn btn-green ms-2">
+                                        🚀 Configura Database
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
         }
 
         // Detect mobile resize
@@ -1607,34 +1824,56 @@
             
             // Gestione modalità online/offline
             if (!supabase) {
-                console.log('💾 Modalità offline - Supabase non configurato');
-                // Mostra subito che è offline
+                console.log('💾 DATABASE NON CONFIGURATO - Modalità offline attiva');
+                isOnlineMode = false;
+                
+                // Mostra status offline
                 const offlineStatus = document.getElementById('offlineStatus');
                 const onlineStatus = document.getElementById('onlineStatus');
                 if (offlineStatus) offlineStatus.classList.remove('d-none');
                 if (onlineStatus) onlineStatus.classList.add('d-none');
                 
+                // Mostra istruzioni configurazione
                 setTimeout(() => {
-                    showAnimatedToast('💾 Modalità offline attiva. Configura il database per sincronizzazione cloud.', 'info');
-                }, 1000);
-            } else {
-                console.log('🌐 Modalità online - Database configurato');
+                    showDatabaseSetupInstructions();
+                }, 2000);
                 
-                // Controlla se l'utente è già loggato
-                supabase.auth.getSession().then(({ data: { session } }) => {
-                    if (!session) {
-                        // Mostra modal di login se non loggato
-                        setTimeout(() => {
-                            showAnimatedToast('🔐 Effettua il login per sincronizzare i tuoi dati nel cloud!', 'info');
-                            showAuthModal();
-                        }, 2000);
+            } else {
+                console.log('🌐 Database configurato - verifica connessione...');
+                
+                // Attendi che la verifica di connessione sia completata
+                setTimeout(() => {
+                    if (dbConnected) {
+                        console.log('✅ Database connesso - modalità online attiva');
+                        
+                        // Controlla se l'utente è già loggato
+                        supabase.auth.getSession().then(({ data: { session } }) => {
+                            if (session) {
+                                currentUser = session.user;
+                                isOnlineMode = true;
+                                showUserInfo();
+                                loadUserRecords().catch(error => {
+                                    console.error('Errore caricamento iniziale:', error);
+                                    isOnlineMode = false;
+                                });
+                            } else {
+                                currentUser = null;
+                                isOnlineMode = false;
+                                showAnimatedToast('🔐 Fai login per sincronizzare i dati nel cloud!', 'info');
+                            }
+                        }).catch(error => {
+                            console.error('Errore controllo sessione:', error);
+                            isOnlineMode = false;
+                        });
                     } else {
-                        // Utente già loggato
-                        currentUser = session.user;
-                        showUserInfo();
-                        loadUserRecords();
+                        console.log('❌ Database non raggiungibile - modalità offline');
+                        isOnlineMode = false;
+                        showAnimatedToast('❌ Database non raggiungibile. Verifica configurazione.', 'error');
+                        setTimeout(() => {
+                            showDatabaseSetupInstructions();
+                        }, 3000);
                     }
-                });
+                }, 2000);
             }
         });
 
@@ -1765,68 +2004,98 @@
         document.getElementById('recordForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            // Controlla se è necessario il login
-            if (isOnlineMode && !currentUser) {
-                showAnimatedToast('🔐 Devi effettuare il login per salvare nel database!', 'warning');
-                showAuthModal();
-                return;
-            }
-            
             const submitBtn = this.querySelector('button[type="submit"]');
             const spinner = submitBtn.querySelector('.loading-spinner');
             const icon = submitBtn.querySelector('.fa-save');
             
-            spinner.classList.remove('d-none');
-            icon.classList.add('d-none');
-            submitBtn.disabled = true;
-
-            // Costruisci record
-            const record = {
-                id: Date.now(),
-                date: document.getElementById('recordDate').value,
-                week: parseInt(document.getElementById('week').value),
-                fertilizers: {
-                    bottle1: parseFloat(document.getElementById('bottle1').value) || 0,
-                    bottle2: parseFloat(document.getElementById('bottle2').value) || 0,
-                    bottle3: parseFloat(document.getElementById('bottle3').value) || 0,
-                    bottle4: parseFloat(document.getElementById('bottle4').value) || 0
-                },
-                parameters: {
-                    ec: parseFloat(document.getElementById('ec').value) || 0,
-                    po4: parseFloat(document.getElementById('po4').value) || 0,
-                    no2: parseFloat(document.getElementById('no2').value) || 0,
-                    no3: parseFloat(document.getElementById('no3').value) || 0,
-                    k: parseFloat(document.getElementById('k').value) || 0,
-                    ca: parseFloat(document.getElementById('ca').value) || 0,
-                    mg: parseFloat(document.getElementById('mg').value) || 0,
-                    ph: parseFloat(document.getElementById('ph').value) || 0
-                },
-                notes: document.getElementById('notes').value
-            };
-
-            // Salva nel database se online
-            if (isOnlineMode && currentUser) {
-                const { error } = await saveRecordToDatabase(record);
-                if (!error) {
-                    // Ricarica dal database per avere l'ID corretto
-                    await loadUserRecords();
-                }
-            } else {
-                // Modalità offline: aggiungi localmente
-                records.push(record);
-                records.sort((a, b) => new Date(a.date) - new Date(b.date));
-                showAnimatedToast('✅ Record salvato localmente!', 'success');
-                updateDisplay();
+            // Funzione per resettare il pulsante
+            function resetButton() {
+                if (spinner) spinner.classList.add('d-none');
+                if (icon) icon.classList.remove('d-none');
+                submitBtn.disabled = false;
             }
             
-            // Reset form
-            this.reset();
-            document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
-            
-            // Reset button
-            spinner.classList.add('d-none');
-            icon.classList.remove('d-none');
-            submitBtn.disabled = false;
+            try {
+                // Mostra loading
+                if (spinner) spinner.classList.remove('d-none');
+                if (icon) icon.classList.add('d-none');
+                submitBtn.disabled = true;
+
+                // Costruisci record
+                const record = {
+                    id: Date.now(),
+                    date: document.getElementById('recordDate').value,
+                    week: parseInt(document.getElementById('week').value),
+                    fertilizers: {
+                        bottle1: parseFloat(document.getElementById('bottle1').value) || 0,
+                        bottle2: parseFloat(document.getElementById('bottle2').value) || 0,
+                        bottle3: parseFloat(document.getElementById('bottle3').value) || 0,
+                        bottle4: parseFloat(document.getElementById('bottle4').value) || 0
+                    },
+                    parameters: {
+                        ec: parseFloat(document.getElementById('ec').value) || 0,
+                        po4: parseFloat(document.getElementById('po4').value) || 0,
+                        no2: parseFloat(document.getElementById('no2').value) || 0,
+                        no3: parseFloat(document.getElementById('no3').value) || 0,
+                        k: parseFloat(document.getElementById('k').value) || 0,
+                        ca: parseFloat(document.getElementById('ca').value) || 0,
+                        mg: parseFloat(document.getElementById('mg').value) || 0,
+                        ph: parseFloat(document.getElementById('ph').value) || 0
+                    },
+                    notes: document.getElementById('notes').value
+                };
+
+                console.log('Tentativo di salvataggio record:', record);
+                console.log('Online mode:', isOnlineMode, 'Current user:', !!currentUser);
+
+                // Salva nel database se online E loggato
+                if (isOnlineMode && currentUser && supabase) {
+                    try {
+                        const { error } = await saveRecordToDatabase(record);
+                        if (error) {
+                            console.error('Errore database, fallback locale:', error);
+                            // Fallback: salva localmente
+                            records.push(record);
+                            records.sort((a, b) => new Date(a.date) - new Date(b.date));
+                            showAnimatedToast('⚠️ Salvato localmente (errore database)', 'warning');
+                        } else {
+                            // Ricarica dal database per sincronizzare
+                            await loadUserRecords();
+                            showAnimatedToast('✅ Record salvato nel database!', 'success');
+                        }
+                    } catch (dbError) {
+                        console.error('Eccezione database:', dbError);
+                        // Fallback: salva localmente
+                        records.push(record);
+                        records.sort((a, b) => new Date(a.date) - new Date(b.date));
+                        showAnimatedToast('⚠️ Salvato localmente (problema database)', 'warning');
+                    }
+                } else {
+                    // Modalità offline: salva localmente
+                    records.push(record);
+                    records.sort((a, b) => new Date(a.date) - new Date(b.date));
+                    
+                    if (!isOnlineMode) {
+                        showAnimatedToast('✅ Record salvato localmente!', 'success');
+                    } else {
+                        showAnimatedToast('🔐 Effettua il login per salvare nel cloud!', 'info');
+                    }
+                }
+                
+                // Aggiorna display
+                updateDisplay();
+                
+                // Reset form
+                this.reset();
+                document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
+                
+            } catch (error) {
+                console.error('Errore generale nel salvataggio:', error);
+                showAnimatedToast('❌ Errore nel salvataggio: ' + error.message, 'error');
+            } finally {
+                // Assicurati sempre di resettare il pulsante
+                resetButton();
+            }
         });
 
         function updateDisplay() {
@@ -2159,474 +2428,3 @@
             if (records.length === 0 || typeof Chart === 'undefined') {
                 console.log('Records o Chart non disponibili per grafico custom');
                 return;
-            }
-
-            const labels = records.map(r => `S${r.week}`);
-            
-            const parameterColors = {
-                bottle1: { color: '#ff9800', label: '🟡 Flacone 1: Ca(NO₃)₂+Mg(NO₃)₂' },
-                bottle2: { color: '#2196f3', label: '🔵 Flacone 2: (NH₄)₂SO₄+K₂SO₄+NK' },
-                bottle3: { color: '#4caf50', label: '🟢 Flacone 3: KHCO₃' },
-                bottle4: { color: '#9c27b0', label: '🟠 Flacone 4: KH₂PO₄' },
-                no3: { color: '#4caf50', label: '🟢 NO3 (mg/l)' },
-                po4: { color: '#2196f3', label: '🔵 PO4 (mg/l)' },
-                no2: { color: '#9c27b0', label: '🟣 NO2 (mg/l)' },
-                k: { color: '#ffc107', label: '🟡 K (mg/l)' },
-                ca: { color: '#607d8b', label: '⚪ Ca (mg/l)' },
-                mg: { color: '#ff9800', label: '🟠 Mg (mg/l)' },
-                ec: { color: '#ff5722', label: '⚡ EC (μS/cm)' },
-                ph: { color: '#e91e63', label: '🔴 pH' }
-            };
-
-            const selectedParams = [];
-            Object.keys(parameterColors).forEach(param => {
-                const checkbox = document.getElementById('custom' + param.charAt(0).toUpperCase() + param.slice(1));
-                if (checkbox && checkbox.checked) {
-                    selectedParams.push(param);
-                }
-            });
-
-            console.log('Parametri selezionati:', selectedParams);
-
-            const datasets = [];
-
-            selectedParams.forEach(param => {
-                const config = parameterColors[param];
-                
-                if (config) {
-                    let data;
-                    if (['bottle1', 'bottle2', 'bottle3', 'bottle4'].includes(param)) {
-                        data = records.map(r => r.fertilizers[param]);
-                    } else {
-                        data = records.map(r => r.parameters[param]);
-                    }
-
-                    datasets.push({
-                        label: config.label,
-                        data: data,
-                        borderColor: config.color,
-                        backgroundColor: config.color + '20',
-                        tension: 0.4,
-                        fill: false,
-                        borderWidth: 3,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    });
-                }
-            });
-
-            if (datasets.length === 0) {
-                datasets.push({
-                    label: 'Seleziona parametri dalle checkbox sopra',
-                    data: new Array(labels.length).fill(0),
-                    borderColor: '#cccccc',
-                    backgroundColor: 'rgba(204, 204, 204, 0.1)',
-                    tension: 0.4,
-                    fill: false,
-                    borderWidth: 1,
-                    pointRadius: 0
-                });
-            }
-
-            updateChart('customChart', {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    animation: {
-                        duration: 800,
-                        easing: 'easeInOutQuart'
-                    },
-                    plugins: {
-                        legend: {
-                            labels: { 
-                                color: '#2d5a27',
-                                font: { size: 11, family: 'Inter' },
-                                usePointStyle: true,
-                                padding: 15
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { 
-                            ticks: { color: '#2d5a27' }, 
-                            grid: { color: 'rgba(45, 90, 39, 0.1)' },
-                            title: { color: '#2d5a27', display: true, text: 'Settimane' }
-                        },
-                        y: { 
-                            ticks: { color: '#2d5a27' }, 
-                            grid: { color: 'rgba(45, 90, 39, 0.1)' },
-                            title: { color: '#2d5a27', display: true, text: 'Valori' }
-                        }
-                    }
-                }
-            });
-        }
-
-        function selectAllCustomChart() {
-            const checkboxes = document.querySelectorAll('#charts-content .form-check-input[type="checkbox"]');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = true;
-            });
-            updateCustomChart();
-            showAnimatedToast('✅ Tutti i parametri selezionati!', 'success');
-        }
-
-        function clearAllCustomChart() {
-            const checkboxes = document.querySelectorAll('#charts-content .form-check-input[type="checkbox"]');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = false;
-            });
-            updateCustomChart();
-            showAnimatedToast('❌ Tutti i parametri deselezionati!', 'info');
-        }
-
-        function selectDefaultCustomChart() {
-            clearAllCustomChart();
-            
-            const recommended = ['customNO3', 'customPO4', 'customBottle1', 'customBottle3'];
-            recommended.forEach(id => {
-                const checkbox = document.getElementById(id);
-                if (checkbox) {
-                    checkbox.checked = true;
-                }
-            });
-            
-            updateCustomChart();
-            showAnimatedToast('⭐ Selezione consigliata applicata!', 'success');
-        }
-
-        function updateStatistics() {
-            const container = document.getElementById('statisticsContainer');
-            
-            if (records.length === 0) {
-                container.innerHTML = `
-                    <div class="parameter-card text-center">
-                        <h6>🚀 Inizia ad aggiungere record per vedere statistiche dettagliate!</h6>
-                        <p>I grafici e le analisi appariranno qui automaticamente</p>
-                        <button class="btn btn-green" onclick="generateSampleData()">
-                            <i class="fas fa-magic"></i> Genera Dati Demo (3 mesi)
-                        </button>
-                    </div>
-                `;
-                return;
-            }
-
-            const stats = calculateStatistics();
-            
-            container.innerHTML = `
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="stat-card" style="animation-delay: 0.1s">
-                            <h6>🧪 Fertilizzazione Media</h6>
-                            <div>🟡 Flacone 1: ${stats.fertilizers.bottle1.avg.toFixed(1)} ml</div>
-                            <div>🔵 Flacone 2: ${stats.fertilizers.bottle2.avg.toFixed(1)} ml</div>
-                            <div>🟢 Flacone 3: ${stats.fertilizers.bottle3.avg.toFixed(1)} ml</div>
-                            <div>🟠 Flacone 4: ${stats.fertilizers.bottle4.avg.toFixed(1)} ml</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card" style="animation-delay: 0.2s">
-                            <h6>🧪 Parametri Medi</h6>
-                            <div>⚡ EC: ${stats.parameters.ec.avg.toFixed(0)} μS/cm</div>
-                            <div>🔴 pH: ${stats.parameters.ph.avg.toFixed(1)}</div>
-                            <div>🟢 NO3: ${stats.parameters.no3.avg.toFixed(1)} mg/l</div>
-                            <div>🔵 PO4: ${stats.parameters.po4.avg.toFixed(2)} mg/l</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card" style="animation-delay: 0.3s">
-                            <h6>🟢 Range NO3</h6>
-                            <div>📉 Min: ${stats.parameters.no3.min.toFixed(1)} mg/l</div>
-                            <div>📈 Max: ${stats.parameters.no3.max.toFixed(1)} mg/l</div>
-                            <div>📊 Δ: ${(stats.parameters.no3.max - stats.parameters.no3.min).toFixed(1)} mg/l</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card" style="animation-delay: 0.4s">
-                            <h6>🔵 Range PO4</h6>
-                            <div>📉 Min: ${stats.parameters.po4.min.toFixed(2)} mg/l</div>
-                            <div>📈 Max: ${stats.parameters.po4.max.toFixed(2)} mg/l</div>
-                            <div>📊 Δ: ${(stats.parameters.po4.max - stats.parameters.po4.min).toFixed(2)} mg/l</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mt-3">
-                    <div class="col-md-4">
-                        <div class="stat-card" style="animation-delay: 0.5s">
-                            <h6>📊 Totale Record</h6>
-                            <h3 class="pulse">${records.length}</h3>
-                            <small>Settimane monitorate</small>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="stat-card" style="animation-delay: 0.6s">
-                            <h6>🕒 Ultimo Aggiornamento</h6>
-                            <div>${formatDate(records[records.length - 1].date)}</div>
-                            <small>Settimana ${records[records.length - 1].week}</small>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="stat-card" style="animation-delay: 0.7s">
-                            <h6>🧮 Fertilizzante Totale</h6>
-                            <div>🟡 Flacone 1: ${stats.fertilizers.bottle1.total.toFixed(1)} ml</div>
-                            <div>🔵 Flacone 2: ${stats.fertilizers.bottle2.total.toFixed(1)} ml</div>
-                            <div>🟢 Flacone 3: ${stats.fertilizers.bottle3.total.toFixed(1)} ml</div>
-                            <div>🟠 Flacone 4: ${stats.fertilizers.bottle4.total.toFixed(1)} ml</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function calculateStatistics() {
-            const paramKeys = ['ec', 'po4', 'no2', 'no3', 'k', 'ca', 'mg', 'ph'];
-            const fertKeys = ['bottle1', 'bottle2', 'bottle3', 'bottle4'];
-            
-            const stats = {
-                parameters: {},
-                fertilizers: {}
-            };
-
-            paramKeys.forEach(key => {
-                const values = records.map(r => r.parameters[key]).filter(v => v > 0);
-                if (values.length > 0) {
-                    stats.parameters[key] = {
-                        avg: values.reduce((a, b) => a + b, 0) / values.length,
-                        min: Math.min(...values),
-                        max: Math.max(...values)
-                    };
-                } else {
-                    stats.parameters[key] = { avg: 0, min: 0, max: 0 };
-                }
-            });
-
-            fertKeys.forEach(key => {
-                const values = records.map(r => r.fertilizers[key]).filter(v => v > 0);
-                if (values.length > 0) {
-                    stats.fertilizers[key] = {
-                        avg: values.reduce((a, b) => a + b, 0) / values.length,
-                        total: values.reduce((a, b) => a + b, 0),
-                        min: Math.min(...values),
-                        max: Math.max(...values)
-                    };
-                } else {
-                    stats.fertilizers[key] = { avg: 0, total: 0, min: 0, max: 0 };
-                }
-            });
-
-            return stats;
-        }
-
-        function deleteRecord(id) {
-            if (confirm('🗑️ Sei sicuro di voler eliminare questo record?')) {
-                // Se online, elimina dal database
-                if (isOnlineMode && currentUser) {
-                    deleteRecordFromDatabase(id).then(({ error }) => {
-                        if (!error) {
-                            loadUserRecords(); // Ricarica dal database
-                            showAnimatedToast('🗑️ Record eliminato dal database!', 'warning');
-                        }
-                    });
-                } else {
-                    // Modalità offline
-                    records = records.filter(r => r.id.toString() !== id.toString());
-                    updateDisplay();
-                    showAnimatedToast('🗑️ Record eliminato!', 'warning');
-                }
-            }
-        }
-
-        function clearAllRecords() {
-            if (confirm('⚠️ Sei sicuro di voler eliminare tutti i record? Questa azione non può essere annullata.')) {
-                records = [];
-                updateDisplay();
-                showAnimatedToast('🧹 Tutti i record sono stati eliminati!', 'warning');
-            }
-        }
-
-        function sortRecords() {
-            records.reverse();
-            updateDisplay();
-            showAnimatedToast('🔄 Record ordinati!', 'info');
-        }
-
-        function generateSampleData() {
-            if (confirm('🎲 Generare dati demo di 3 mesi? Questo sovrascriverà i dati esistenti.')) {
-                records = [];
-                
-                const startDate = new Date();
-                startDate.setDate(startDate.getDate() - (13 * 7));
-                
-                for (let i = 0; i < 13; i++) {
-                    const date = new Date(startDate);
-                    date.setDate(date.getDate() + (i * 7));
-                    
-                    const week = Math.ceil(((date - new Date(date.getFullYear(), 0, 1)) / 86400000 + new Date(date.getFullYear(), 0, 1).getDay() + 1) / 7);
-                    
-                    const record = {
-                        id: Date.now() + i,
-                        date: date.toISOString().split('T')[0],
-                        week: week,
-                        fertilizers: {
-                            bottle1: parseFloat((Math.random() * 3 + 1).toFixed(1)),
-                            bottle2: parseFloat((Math.random() * 2.5 + 1.5).toFixed(1)),
-                            bottle3: parseFloat((Math.random() * 1.5 + 0.5).toFixed(1)),
-                            bottle4: parseFloat((Math.random() * 1 + 0.3).toFixed(1))
-                        },
-                        parameters: {
-                            ec: Math.floor(Math.random() * 150 + 250),
-                            po4: parseFloat((Math.random() * 0.8 + 0.2).toFixed(2)),
-                            no2: parseFloat((Math.random() * 0.1).toFixed(2)),
-                            no3: parseFloat((Math.random() * 15 + 5).toFixed(1)),
-                            k: parseFloat((Math.random() * 10 + 10).toFixed(1)),
-                            ca: parseFloat((Math.random() * 20 + 30).toFixed(1)),
-                            mg: parseFloat((Math.random() * 10 + 5).toFixed(1)),
-                            ph: parseFloat((Math.random() * 0.8 + 6.2).toFixed(1))
-                        },
-                        notes: getRandomNote()
-                    };
-                    
-                    records.push(record);
-                }
-                
-                records.sort((a, b) => new Date(a.date) - new Date(b.date));
-                updateDisplay();
-                
-                setTimeout(() => {
-                    addCheckboxListeners();
-                    document.getElementById('customNO3').checked = true;
-                    document.getElementById('customPO4').checked = true;
-                    document.getElementById('customBottle1').checked = true;
-                    updateCustomChart();
-                }, 500);
-                
-                showAnimatedToast('🎲 Dati demo di 3 mesi generati con successo!', 'success');
-            }
-        }
-
-        function getRandomNote() {
-            const notes = [
-                "Piante in ottima salute, crescita vigorosa",
-                "Leggera presenza di alghe verdi sui vetri",
-                "Cambio d'acqua del 30% effettuato",
-                "Potatura delle piante a crescita rapida",
-                "Aggiunto nuovo CO2, pH leggermente sceso",
-                "Fertilizzazione ridotta per eccesso di nitrati",
-                "Piante rosse mostrano bella colorazione",
-                "Testato nuovo dosaggio dopo ricerca",
-                "Alghe filamentose rimosse manualmente",
-                "Pulizia del filtro e manutenzione",
-                "Aggiunte nuove piante tappezzanti",
-                "",
-                ""
-            ];
-            return notes[Math.floor(Math.random() * notes.length)];
-        }
-
-        function exportData() {
-            const dataStr = JSON.stringify(records, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            const url = URL.createObjectURL(dataBlob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `aquafert-data-${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-            URL.revokeObjectURL(url);
-            showAnimatedToast('💾 Dati esportati con successo!', 'success');
-        }
-
-        function importData() {
-            document.getElementById('fileInput').click();
-        }
-
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const importedRecords = JSON.parse(e.target.result);
-                        if (Array.isArray(importedRecords)) {
-                            records = importedRecords;
-                            records.sort((a, b) => new Date(a.date) - new Date(b.date));
-                            updateDisplay();
-                            showAnimatedToast('📂 Dati importati con successo!', 'success');
-                        } else {
-                            throw new Error('Formato file non valido');
-                        }
-                    } catch (error) {
-                        showAnimatedToast('❌ Errore nell\'importazione del file!', 'error');
-                    }
-                };
-                reader.readAsText(file);
-            }
-        });
-
-        function formatDate(dateString) {
-            return new Date(dateString).toLocaleDateString('it-IT');
-        }
-
-        function showAnimatedToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = 'toast-notification';
-            
-            const borderColor = {
-                'success': '#4caf50',
-                'warning': '#ff9800', 
-                'error': '#f44336',
-                'info': '#2196f3'
-            };
-            
-            toast.style.borderColor = borderColor[type] || borderColor.success;
-            toast.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <span>${message}</span>
-                    <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
-                </div>
-            `;
-            
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                if (toast.parentElement) {
-                    toast.style.animation = 'slideInRight 0.5s ease-out reverse';
-                    setTimeout(() => toast.remove(), 500);
-                }
-            }, 4000);
-        }
-
-        document.addEventListener('shown.bs.tab', function (event) {
-            if (event.target.id === 'charts-tab') {
-                const loadingEl = document.getElementById('charts-loading');
-                const errorEl = document.getElementById('charts-error');
-                const contentEl = document.getElementById('charts-content');
-                
-                if (typeof Chart !== 'undefined') {
-                    if (loadingEl) loadingEl.style.display = 'block';
-                    if (errorEl) errorEl.style.display = 'none';
-                    setTimeout(() => {
-                        updateCharts();
-                        addCheckboxListeners();
-                    }, 200);
-                } else {
-                    if (loadingEl) loadingEl.style.display = 'none';
-                    if (errorEl) errorEl.style.display = 'block';
-                    if (contentEl) contentEl.style.display = 'none';
-                    showAnimatedToast('⚠️ Chart.js non caricato. Ricarica la pagina.', 'error');
-                }
-            }
-        });
-
-        console.log('🌿 AquaFert Pro con Google Login inizializzato');
-        console.log('📧 Per configurare il database, sostituisci SUPABASE_URL e SUPABASE_ANON_KEY');
-        console.log('💾 Modalità attuale:', isOnlineMode ? 'Online (Database)' : 'Offline (Locale)');
-        console.log('🔐 Google Login abilitato per autenticazione OAuth');
-    </script>
-</body>
-</html>
