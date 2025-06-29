@@ -721,6 +721,15 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <div class="navbar-nav ms-auto">
+                    <div class="navbar-text me-3" id="connectionStatus">
+                        <span id="offlineStatus" class="text-warning">
+                            💾 Offline
+                            <button class="btn btn-outline-light btn-sm ms-2" onclick="showAuthModal()" id="loginBtn" style="display: none;">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </button>
+                        </span>
+                        <span id="onlineStatus" class="text-success d-none">🌐 Online</span>
+                    </div>
                     <button class="btn btn-outline-light btn-sm m-1" onclick="exportData()">
                         <i class="fas fa-download"></i> <span class="d-none d-md-inline">Esporta</span>
                     </button>
@@ -1086,7 +1095,7 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
-        
+        // Configurazione Supabase - SOSTITUISCI QUESTI VALORI!
         const SUPABASE_URL = 'https://bazlalyalcfwenvwlpxe.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhemxhbHlhbGNmd2VudndscHhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExOTkzNzMsImV4cCI6MjA2Njc3NTM3M30.UgQjmNAi-rfo7nvblLH8IhaXuRBnaO1snV8mi_0EOKA';
         
@@ -1101,6 +1110,336 @@
         let isMobile = window.innerWidth <= 768;
         let currentUser = null;
         let isOnlineMode = !!supabase;
+
+        // Gestione autenticazione Supabase
+        if (supabase) {
+            supabase.auth.onAuthStateChange(async (event, session) => {
+                console.log('Auth state changed:', event, session?.user?.email);
+                currentUser = session?.user || null;
+                
+                if (currentUser) {
+                    hideAuthModal();
+                    showUserInfo();
+                    await loadUserRecords();
+                    showAnimatedToast(`👋 Benvenuto ${currentUser.email}!`, 'success');
+                } else {
+                    showAuthModal();
+                    hideUserInfo();
+                    records = [];
+                    updateDisplay();
+                }
+            });
+        }
+
+        // Funzioni autenticazione
+        async function signUp(email, password) {
+            if (!supabase) return { error: { message: 'Database non configurato' } };
+            
+            const { data, error } = await supabase.auth.signUp({
+                email: email,
+                password: password,
+            });
+            
+            if (error) {
+                showAnimatedToast('❌ ' + error.message, 'error');
+            } else {
+                showAnimatedToast('✅ Controlla la tua email per confermare!', 'success');
+            }
+            
+            return { data, error };
+        }
+
+        async function signIn(email, password) {
+            if (!supabase) return { error: { message: 'Database non configurato' } };
+            
+            const { data, error } = await supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
+            
+            if (error) {
+                showAnimatedToast('❌ ' + error.message, 'error');
+            }
+            
+            return { data, error };
+        }
+
+        async function signOut() {
+            if (!supabase) return;
+            
+            const { error } = await supabase.auth.signOut();
+            if (!error) {
+                showAnimatedToast('👋 Logout effettuato!', 'success');
+            }
+        }
+
+        // Gestione database
+        async function saveRecordToDatabase(record) {
+            if (!supabase || !currentUser) {
+                console.log('Modalità offline: salvando localmente');
+                return { data: null, error: null };
+            }
+
+            const dbRecord = {
+                user_id: currentUser.id,
+                date: record.date,
+                week: record.week,
+                bottle1: record.fertilizers.bottle1,
+                bottle2: record.fertilizers.bottle2,
+                bottle3: record.fertilizers.bottle3,
+                bottle4: record.fertilizers.bottle4,
+                ec: record.parameters.ec,
+                po4: record.parameters.po4,
+                no2: record.parameters.no2,
+                no3: record.parameters.no3,
+                k: record.parameters.k,
+                ca: record.parameters.ca,
+                mg: record.parameters.mg,
+                ph: record.parameters.ph,
+                notes: record.notes
+            };
+
+            const { data, error } = await supabase
+                .from('fertilization_records')
+                .insert([dbRecord]);
+
+            if (error) {
+                console.error('Errore salvataggio database:', error);
+                showAnimatedToast('❌ Errore nel salvataggio database!', 'error');
+            } else {
+                showAnimatedToast('✅ Record salvato nel database!', 'success');
+            }
+            
+            return { data, error };
+        }
+
+        async function loadUserRecords() {
+            if (!supabase || !currentUser) {
+                console.log('Modalità offline: caricando dati locali');
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('fertilization_records')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('date', { ascending: true });
+
+            if (error) {
+                console.error('Errore caricamento:', error);
+                showAnimatedToast('❌ Errore nel caricamento dati!', 'error');
+                return;
+            }
+
+            // Converti formato database in formato app
+            records = data.map(record => ({
+                id: record.id,
+                date: record.date,
+                week: record.week,
+                fertilizers: {
+                    bottle1: record.bottle1 || 0,
+                    bottle2: record.bottle2 || 0,
+                    bottle3: record.bottle3 || 0,
+                    bottle4: record.bottle4 || 0
+                },
+                parameters: {
+                    ec: record.ec || 0,
+                    po4: record.po4 || 0,
+                    no2: record.no2 || 0,
+                    no3: record.no3 || 0,
+                    k: record.k || 0,
+                    ca: record.ca || 0,
+                    mg: record.mg || 0,
+                    ph: record.ph || 0
+                },
+                notes: record.notes || ''
+            }));
+
+            updateDisplay();
+            console.log(`Caricati ${records.length} record dal database`);
+        }
+
+        async function deleteRecordFromDatabase(recordId) {
+            if (!supabase || !currentUser) return { error: null };
+
+            const { error } = await supabase
+                .from('fertilization_records')
+                .delete()
+                .eq('id', recordId)
+                .eq('user_id', currentUser.id);
+
+            if (error) {
+                console.error('Errore eliminazione:', error);
+                showAnimatedToast('❌ Errore nell\'eliminazione!', 'error');
+            }
+
+            return { error };
+        }
+
+        // UI Autenticazione
+        function showAuthModal() {
+            if (!supabase) return; // Non mostrare se non configurato
+            
+            // Crea modal se non esiste
+            if (!document.getElementById('authModal')) {
+                createAuthModal();
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('authModal'));
+            modal.show();
+        }
+
+        function hideAuthModal() {
+            const modalEl = document.getElementById('authModal');
+            if (modalEl) {
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+            }
+        }
+
+        function createAuthModal() {
+            const modalHTML = `
+                <div class="modal fade" id="authModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border: 2px solid rgba(76, 175, 80, 0.2); border-radius: 20px;">
+                            <div class="modal-header" style="background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%); border: none; border-radius: 20px 20px 0 0;">
+                                <h5 class="modal-title text-white">🔐 Accesso AquaFert Pro</h5>
+                            </div>
+                            <div class="modal-body p-4">
+                                <form id="authForm">
+                                    <div class="mb-3">
+                                        <label class="form-label" style="color: #2d5a27; font-weight: 600;">📧 Email</label>
+                                        <input type="email" class="form-control" id="authEmail" required style="border-radius: 15px; border: 2px solid rgba(76, 175, 80, 0.2);">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" style="color: #2d5a27; font-weight: 600;">🔒 Password</label>
+                                        <input type="password" class="form-control" id="authPassword" required style="border-radius: 15px; border: 2px solid rgba(76, 175, 80, 0.2);">
+                                    </div>
+                                    <button type="submit" class="btn btn-green w-100" id="authSubmitBtn">
+                                        <span id="authButtonText">Accedi</span>
+                                        <span class="loading-spinner d-none ms-2"></span>
+                                    </button>
+                                </form>
+                                <hr style="border-color: rgba(76, 175, 80, 0.2);">
+                                <p class="text-center" style="color: #2d5a27;">
+                                    <span id="authSwitchText">Non hai un account?</span>
+                                    <a href="#" id="authSwitchLink" style="color: #4caf50; font-weight: 600;">Registrati</a>
+                                </p>
+                                <div class="text-center mt-3">
+                                    <button class="btn btn-outline-secondary btn-sm" onclick="useOfflineMode()" style="border-radius: 50px;">
+                                        💾 Usa Modalità Offline
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            setupAuthModalEvents();
+        }
+
+        function setupAuthModalEvents() {
+            let isLoginMode = true;
+            
+            const form = document.getElementById('authForm');
+            const switchLink = document.getElementById('authSwitchLink');
+            const switchText = document.getElementById('authSwitchText');
+            const buttonText = document.getElementById('authButtonText');
+            const submitBtn = document.getElementById('authSubmitBtn');
+            const spinner = submitBtn.querySelector('.loading-spinner');
+
+            // Toggle tra login e registrazione
+            switchLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                isLoginMode = !isLoginMode;
+                
+                if (isLoginMode) {
+                    buttonText.textContent = 'Accedi';
+                    switchText.textContent = 'Non hai un account?';
+                    switchLink.textContent = 'Registrati';
+                } else {
+                    buttonText.textContent = 'Registrati';
+                    switchText.textContent = 'Hai già un account?';
+                    switchLink.textContent = 'Accedi';
+                }
+            });
+
+            // Submit form
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const email = document.getElementById('authEmail').value;
+                const password = document.getElementById('authPassword').value;
+                
+                // Show loading
+                spinner.classList.remove('d-none');
+                submitBtn.disabled = true;
+                
+                let result;
+                if (isLoginMode) {
+                    result = await signIn(email, password);
+                } else {
+                    result = await signUp(email, password);
+                }
+                
+                // Hide loading
+                spinner.classList.add('d-none');
+                submitBtn.disabled = false;
+                
+                if (!result.error && isLoginMode) {
+                    // Login successful, modal will close automatically via auth state change
+                    form.reset();
+                }
+            });
+        }
+
+        function showUserInfo() {
+            if (!currentUser) return;
+            
+            // Aggiorna stato connessione
+            const offlineStatus = document.getElementById('offlineStatus');
+            const onlineStatus = document.getElementById('onlineStatus');
+            if (offlineStatus) offlineStatus.classList.add('d-none');
+            if (onlineStatus) onlineStatus.classList.remove('d-none');
+            
+            // Aggiunge info utente alla navbar
+            const navbar = document.querySelector('.navbar .navbar-nav');
+            if (navbar && !document.getElementById('userInfo')) {
+                const userInfoHTML = `
+                    <div class="navbar-text text-white me-3" id="userInfo" style="font-size: 0.9rem;">
+                        👤 ${currentUser.email.length > 20 ? currentUser.email.substring(0, 20) + '...' : currentUser.email}
+                    </div>
+                    <button class="btn btn-outline-light btn-sm" onclick="signOut()" style="border-radius: 50px;">
+                        <i class="fas fa-sign-out-alt"></i> <span class="d-none d-md-inline">Logout</span>
+                    </button>
+                `;
+                navbar.insertAdjacentHTML('afterbegin', userInfoHTML);
+            }
+        }
+
+        function hideUserInfo() {
+            // Aggiorna stato connessione
+            const offlineStatus = document.getElementById('offlineStatus');
+            const onlineStatus = document.getElementById('onlineStatus');
+            if (offlineStatus) offlineStatus.classList.remove('d-none');
+            if (onlineStatus) onlineStatus.classList.add('d-none');
+            
+            const userInfo = document.getElementById('userInfo');
+            if (userInfo) {
+                userInfo.remove();
+                // Rimuovi anche il pulsante logout
+                const logoutBtn = document.querySelector('button[onclick="signOut()"]');
+                if (logoutBtn) logoutBtn.remove();
+            }
+        }
+
+        function useOfflineMode() {
+            hideAuthModal();
+            showAnimatedToast('💾 Modalità offline attivata. I dati saranno salvati localmente.', 'info');
+            updateDisplay();
+        }
 
         // Detect mobile resize
         window.addEventListener('resize', function() {
@@ -1162,9 +1501,36 @@
                 }
             }, 1000);
             
+            // Gestione modalità online/offline
             if (!supabase) {
                 console.log('💾 Modalità offline - Supabase non configurato');
-                showAnimatedToast('💾 Modalità offline attiva. Configura il database per sincronizzazione.', 'info');
+                // Mostra subito che è offline
+                const offlineStatus = document.getElementById('offlineStatus');
+                const onlineStatus = document.getElementById('onlineStatus');
+                if (offlineStatus) offlineStatus.classList.remove('d-none');
+                if (onlineStatus) onlineStatus.classList.add('d-none');
+                
+                setTimeout(() => {
+                    showAnimatedToast('💾 Modalità offline attiva. Configura il database per sincronizzazione cloud.', 'info');
+                }, 1000);
+            } else {
+                console.log('🌐 Modalità online - Database configurato');
+                
+                // Controlla se l'utente è già loggato
+                supabase.auth.getSession().then(({ data: { session } }) => {
+                    if (!session) {
+                        // Mostra modal di login se non loggato
+                        setTimeout(() => {
+                            showAnimatedToast('🔐 Effettua il login per sincronizzare i tuoi dati nel cloud!', 'info');
+                            showAuthModal();
+                        }, 2000);
+                    } else {
+                        // Utente già loggato
+                        currentUser = session.user;
+                        showUserInfo();
+                        loadUserRecords();
+                    }
+                });
             }
         });
 
@@ -1292,8 +1658,15 @@
         }
 
         // Form submission
-        document.getElementById('recordForm').addEventListener('submit', function(e) {
+        document.getElementById('recordForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            // Controlla se è necessario il login
+            if (isOnlineMode && !currentUser) {
+                showAnimatedToast('🔐 Devi effettuare il login per salvare nel database!', 'warning');
+                showAuthModal();
+                return;
+            }
             
             const submitBtn = this.querySelector('button[type="submit"]');
             const spinner = submitBtn.querySelector('.loading-spinner');
@@ -1303,43 +1676,53 @@
             icon.classList.add('d-none');
             submitBtn.disabled = true;
 
-            setTimeout(() => {
-                const record = {
-                    id: Date.now(),
-                    date: document.getElementById('recordDate').value,
-                    week: parseInt(document.getElementById('week').value),
-                    fertilizers: {
-                        bottle1: parseFloat(document.getElementById('bottle1').value) || 0,
-                        bottle2: parseFloat(document.getElementById('bottle2').value) || 0,
-                        bottle3: parseFloat(document.getElementById('bottle3').value) || 0,
-                        bottle4: parseFloat(document.getElementById('bottle4').value) || 0
-                    },
-                    parameters: {
-                        ec: parseFloat(document.getElementById('ec').value) || 0,
-                        po4: parseFloat(document.getElementById('po4').value) || 0,
-                        no2: parseFloat(document.getElementById('no2').value) || 0,
-                        no3: parseFloat(document.getElementById('no3').value) || 0,
-                        k: parseFloat(document.getElementById('k').value) || 0,
-                        ca: parseFloat(document.getElementById('ca').value) || 0,
-                        mg: parseFloat(document.getElementById('mg').value) || 0,
-                        ph: parseFloat(document.getElementById('ph').value) || 0
-                    },
-                    notes: document.getElementById('notes').value
-                };
+            // Costruisci record
+            const record = {
+                id: Date.now(),
+                date: document.getElementById('recordDate').value,
+                week: parseInt(document.getElementById('week').value),
+                fertilizers: {
+                    bottle1: parseFloat(document.getElementById('bottle1').value) || 0,
+                    bottle2: parseFloat(document.getElementById('bottle2').value) || 0,
+                    bottle3: parseFloat(document.getElementById('bottle3').value) || 0,
+                    bottle4: parseFloat(document.getElementById('bottle4').value) || 0
+                },
+                parameters: {
+                    ec: parseFloat(document.getElementById('ec').value) || 0,
+                    po4: parseFloat(document.getElementById('po4').value) || 0,
+                    no2: parseFloat(document.getElementById('no2').value) || 0,
+                    no3: parseFloat(document.getElementById('no3').value) || 0,
+                    k: parseFloat(document.getElementById('k').value) || 0,
+                    ca: parseFloat(document.getElementById('ca').value) || 0,
+                    mg: parseFloat(document.getElementById('mg').value) || 0,
+                    ph: parseFloat(document.getElementById('ph').value) || 0
+                },
+                notes: document.getElementById('notes').value
+            };
 
+            // Salva nel database se online
+            if (isOnlineMode && currentUser) {
+                const { error } = await saveRecordToDatabase(record);
+                if (!error) {
+                    // Ricarica dal database per avere l'ID corretto
+                    await loadUserRecords();
+                }
+            } else {
+                // Modalità offline: aggiungi localmente
                 records.push(record);
                 records.sort((a, b) => new Date(a.date) - new Date(b.date));
-                
-                this.reset();
-                document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
-                
-                spinner.classList.add('d-none');
-                icon.classList.remove('d-none');
-                submitBtn.disabled = false;
-                
-                showAnimatedToast('✅ Record salvato con successo!', 'success');
+                showAnimatedToast('✅ Record salvato localmente!', 'success');
                 updateDisplay();
-            }, 1000);
+            }
+            
+            // Reset form
+            this.reset();
+            document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
+            
+            // Reset button
+            spinner.classList.add('d-none');
+            icon.classList.remove('d-none');
+            submitBtn.disabled = false;
         });
 
         function updateDisplay() {
@@ -1938,9 +2321,20 @@
 
         function deleteRecord(id) {
             if (confirm('🗑️ Sei sicuro di voler eliminare questo record?')) {
-                records = records.filter(r => r.id.toString() !== id.toString());
-                updateDisplay();
-                showAnimatedToast('🗑️ Record eliminato!', 'warning');
+                // Se online, elimina dal database
+                if (isOnlineMode && currentUser) {
+                    deleteRecordFromDatabase(id).then(({ error }) => {
+                        if (!error) {
+                            loadUserRecords(); // Ricarica dal database
+                            showAnimatedToast('🗑️ Record eliminato dal database!', 'warning');
+                        }
+                    });
+                } else {
+                    // Modalità offline
+                    records = records.filter(r => r.id.toString() !== id.toString());
+                    updateDisplay();
+                    showAnimatedToast('🗑️ Record eliminato!', 'warning');
+                }
             }
         }
 
