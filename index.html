@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="AquaFert Pro">
     <meta name="theme-color" content="#4caf50">
@@ -223,6 +223,42 @@
 
         .btn-green:active {
             transform: translateY(-1px);
+        }
+
+        .btn-google {
+            background: linear-gradient(135deg, #4285f4 0%, #34a853 25%, #fbbc05 50%, #ea4335 75%, #4285f4 100%);
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 15px 30px;
+            border-radius: 50px;
+            position: relative;
+            overflow: hidden;
+            transform: perspective(1px) translateZ(0);
+            min-height: 50px;
+            font-size: 16px;
+        }
+
+        .btn-google::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #3367d6 0%, #0f9d58 25%, #f4b400 50%, #db4437 75%, #3367d6 100%);
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+
+        .btn-google:hover {
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(66, 133, 244, 0.3);
+        }
+
+        .btn-google:hover::before {
+            left: 0;
         }
 
         .parameter-card {
@@ -472,6 +508,30 @@
             background: rgba(76, 175, 80, 0.08);
         }
 
+        /* OAuth buttons styling */
+        .auth-divider {
+            position: relative;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .auth-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(76, 175, 80, 0.2);
+        }
+
+        .auth-divider span {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 0 15px;
+            color: #2d5a27;
+            font-weight: 500;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding-left: 10px;
@@ -534,7 +594,7 @@
                 margin-bottom: 15px;
             }
             
-            .btn-green, .btn {
+            .btn-green, .btn, .btn-google {
                 width: 100%;
                 margin-bottom: 10px;
                 padding: 15px;
@@ -1095,7 +1155,7 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Configurazione Supabase - SOSTITUISCI QUESTI VALORI!
+        // Configurazione Supabase - SOSTITUISCI QUESTI VALORI CON I TUOI!
         const SUPABASE_URL = 'https://bazlalyalcfwenvwlpxe.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJhemxhbHlhbGNmd2VudndscHhlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTExOTkzNzMsImV4cCI6MjA2Njc3NTM3M30.UgQjmNAi-rfo7nvblLH8IhaXuRBnaO1snV8mi_0EOKA';
         
@@ -1162,6 +1222,39 @@
             }
             
             return { data, error };
+        }
+
+        // ✨ NUOVO: Funzione per login con Google
+        async function signInWithGoogle() {
+            if (!supabase) {
+                showAnimatedToast('❌ Database non configurato!', 'error');
+                return { error: { message: 'Database non configurato' } };
+            }
+            
+            try {
+                const { data, error } = await supabase.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: window.location.origin + window.location.pathname
+                    }
+                });
+                
+                if (error) {
+                    console.error('Errore login Google:', error);
+                    showAnimatedToast('❌ Errore login Google: ' + error.message, 'error');
+                    return { data: null, error };
+                }
+                
+                console.log('Reindirizzamento a Google in corso...');
+                showAnimatedToast('🔄 Reindirizzamento a Google...', 'info');
+                
+                return { data, error: null };
+                
+            } catch (err) {
+                console.error('Errore imprevisto login Google:', err);
+                showAnimatedToast('❌ Errore imprevisto durante il login con Google', 'error');
+                return { data: null, error: err };
+            }
         }
 
         async function signOut() {
@@ -1306,6 +1399,17 @@
                                 <h5 class="modal-title text-white">🔐 Accesso AquaFert Pro</h5>
                             </div>
                             <div class="modal-body p-4">
+                                <!-- ✨ NUOVO: Pulsante Google Login -->
+                                <button type="button" class="btn btn-google w-100 mb-3" onclick="signInWithGoogle()" id="googleSignInBtn">
+                                    <i class="fab fa-google me-2"></i>
+                                    <span id="googleButtonText">Continua con Google</span>
+                                    <span class="loading-spinner d-none ms-2"></span>
+                                </button>
+                                
+                                <div class="auth-divider">
+                                    <span>oppure</span>
+                                </div>
+                                
                                 <form id="authForm">
                                     <div class="mb-3">
                                         <label class="form-label" style="color: #2d5a27; font-weight: 600;">📧 Email</label>
@@ -2149,379 +2253,4 @@
                     },
                     scales: {
                         x: { 
-                            ticks: { color: '#2d5a27' }, 
-                            grid: { color: 'rgba(45, 90, 39, 0.1)' },
-                            title: { color: '#2d5a27', display: true, text: 'Settimane' }
-                        },
-                        y: { 
-                            ticks: { color: '#2d5a27' }, 
-                            grid: { color: 'rgba(45, 90, 39, 0.1)' },
-                            title: { color: '#2d5a27', display: true, text: 'Valori' }
-                        }
-                    }
-                }
-            });
-        }
-
-        function selectAllCustomChart() {
-            const checkboxes = document.querySelectorAll('#charts-content .form-check-input[type="checkbox"]');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = true;
-            });
-            updateCustomChart();
-            showAnimatedToast('✅ Tutti i parametri selezionati!', 'success');
-        }
-
-        function clearAllCustomChart() {
-            const checkboxes = document.querySelectorAll('#charts-content .form-check-input[type="checkbox"]');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = false;
-            });
-            updateCustomChart();
-            showAnimatedToast('❌ Tutti i parametri deselezionati!', 'info');
-        }
-
-        function selectDefaultCustomChart() {
-            clearAllCustomChart();
-            
-            const recommended = ['customNO3', 'customPO4', 'customBottle1', 'customBottle3'];
-            recommended.forEach(id => {
-                const checkbox = document.getElementById(id);
-                if (checkbox) {
-                    checkbox.checked = true;
-                }
-            });
-            
-            updateCustomChart();
-            showAnimatedToast('⭐ Selezione consigliata applicata!', 'success');
-        }
-
-        function updateStatistics() {
-            const container = document.getElementById('statisticsContainer');
-            
-            if (records.length === 0) {
-                container.innerHTML = `
-                    <div class="parameter-card text-center">
-                        <h6>🚀 Inizia ad aggiungere record per vedere statistiche dettagliate!</h6>
-                        <p>I grafici e le analisi appariranno qui automaticamente</p>
-                        <button class="btn btn-green" onclick="generateSampleData()">
-                            <i class="fas fa-magic"></i> Genera Dati Demo (3 mesi)
-                        </button>
-                    </div>
-                `;
-                return;
-            }
-
-            const stats = calculateStatistics();
-            
-            container.innerHTML = `
-                <div class="row">
-                    <div class="col-md-3">
-                        <div class="stat-card" style="animation-delay: 0.1s">
-                            <h6>🧪 Fertilizzazione Media</h6>
-                            <div>🟡 Flacone 1: ${stats.fertilizers.bottle1.avg.toFixed(1)} ml</div>
-                            <div>🔵 Flacone 2: ${stats.fertilizers.bottle2.avg.toFixed(1)} ml</div>
-                            <div>🟢 Flacone 3: ${stats.fertilizers.bottle3.avg.toFixed(1)} ml</div>
-                            <div>🟠 Flacone 4: ${stats.fertilizers.bottle4.avg.toFixed(1)} ml</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card" style="animation-delay: 0.2s">
-                            <h6>🧪 Parametri Medi</h6>
-                            <div>⚡ EC: ${stats.parameters.ec.avg.toFixed(0)} μS/cm</div>
-                            <div>🔴 pH: ${stats.parameters.ph.avg.toFixed(1)}</div>
-                            <div>🟢 NO3: ${stats.parameters.no3.avg.toFixed(1)} mg/l</div>
-                            <div>🔵 PO4: ${stats.parameters.po4.avg.toFixed(2)} mg/l</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card" style="animation-delay: 0.3s">
-                            <h6>🟢 Range NO3</h6>
-                            <div>📉 Min: ${stats.parameters.no3.min.toFixed(1)} mg/l</div>
-                            <div>📈 Max: ${stats.parameters.no3.max.toFixed(1)} mg/l</div>
-                            <div>📊 Δ: ${(stats.parameters.no3.max - stats.parameters.no3.min).toFixed(1)} mg/l</div>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="stat-card" style="animation-delay: 0.4s">
-                            <h6>🔵 Range PO4</h6>
-                            <div>📉 Min: ${stats.parameters.po4.min.toFixed(2)} mg/l</div>
-                            <div>📈 Max: ${stats.parameters.po4.max.toFixed(2)} mg/l</div>
-                            <div>📊 Δ: ${(stats.parameters.po4.max - stats.parameters.po4.min).toFixed(2)} mg/l</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row mt-3">
-                    <div class="col-md-4">
-                        <div class="stat-card" style="animation-delay: 0.5s">
-                            <h6>📊 Totale Record</h6>
-                            <h3 class="pulse">${records.length}</h3>
-                            <small>Settimane monitorate</small>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="stat-card" style="animation-delay: 0.6s">
-                            <h6>🕒 Ultimo Aggiornamento</h6>
-                            <div>${formatDate(records[records.length - 1].date)}</div>
-                            <small>Settimana ${records[records.length - 1].week}</small>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="stat-card" style="animation-delay: 0.7s">
-                            <h6>🧮 Fertilizzante Totale</h6>
-                            <div>🟡 Flacone 1: ${stats.fertilizers.bottle1.total.toFixed(1)} ml</div>
-                            <div>🔵 Flacone 2: ${stats.fertilizers.bottle2.total.toFixed(1)} ml</div>
-                            <div>🟢 Flacone 3: ${stats.fertilizers.bottle3.total.toFixed(1)} ml</div>
-                            <div>🟠 Flacone 4: ${stats.fertilizers.bottle4.total.toFixed(1)} ml</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function calculateStatistics() {
-            const paramKeys = ['ec', 'po4', 'no2', 'no3', 'k', 'ca', 'mg', 'ph'];
-            const fertKeys = ['bottle1', 'bottle2', 'bottle3', 'bottle4'];
-            
-            const stats = {
-                parameters: {},
-                fertilizers: {}
-            };
-
-            paramKeys.forEach(key => {
-                const values = records.map(r => r.parameters[key]).filter(v => v > 0);
-                if (values.length > 0) {
-                    stats.parameters[key] = {
-                        avg: values.reduce((a, b) => a + b, 0) / values.length,
-                        min: Math.min(...values),
-                        max: Math.max(...values)
-                    };
-                } else {
-                    stats.parameters[key] = { avg: 0, min: 0, max: 0 };
-                }
-            });
-
-            fertKeys.forEach(key => {
-                const values = records.map(r => r.fertilizers[key]).filter(v => v > 0);
-                if (values.length > 0) {
-                    stats.fertilizers[key] = {
-                        avg: values.reduce((a, b) => a + b, 0) / values.length,
-                        total: values.reduce((a, b) => a + b, 0),
-                        min: Math.min(...values),
-                        max: Math.max(...values)
-                    };
-                } else {
-                    stats.fertilizers[key] = { avg: 0, total: 0, min: 0, max: 0 };
-                }
-            });
-
-            return stats;
-        }
-
-        function deleteRecord(id) {
-            if (confirm('🗑️ Sei sicuro di voler eliminare questo record?')) {
-                // Se online, elimina dal database
-                if (isOnlineMode && currentUser) {
-                    deleteRecordFromDatabase(id).then(({ error }) => {
-                        if (!error) {
-                            loadUserRecords(); // Ricarica dal database
-                            showAnimatedToast('🗑️ Record eliminato dal database!', 'warning');
-                        }
-                    });
-                } else {
-                    // Modalità offline
-                    records = records.filter(r => r.id.toString() !== id.toString());
-                    updateDisplay();
-                    showAnimatedToast('🗑️ Record eliminato!', 'warning');
-                }
-            }
-        }
-
-        function clearAllRecords() {
-            if (confirm('⚠️ Sei sicuro di voler eliminare tutti i record? Questa azione non può essere annullata.')) {
-                records = [];
-                updateDisplay();
-                showAnimatedToast('🧹 Tutti i record sono stati eliminati!', 'warning');
-            }
-        }
-
-        function sortRecords() {
-            records.reverse();
-            updateDisplay();
-            showAnimatedToast('🔄 Record ordinati!', 'info');
-        }
-
-        function generateSampleData() {
-            if (confirm('🎲 Generare dati demo di 3 mesi? Questo sovrascriverà i dati esistenti.')) {
-                records = [];
-                
-                const startDate = new Date();
-                startDate.setDate(startDate.getDate() - (13 * 7));
-                
-                for (let i = 0; i < 13; i++) {
-                    const date = new Date(startDate);
-                    date.setDate(date.getDate() + (i * 7));
-                    
-                    const week = Math.ceil(((date - new Date(date.getFullYear(), 0, 1)) / 86400000 + new Date(date.getFullYear(), 0, 1).getDay() + 1) / 7);
-                    
-                    const record = {
-                        id: Date.now() + i,
-                        date: date.toISOString().split('T')[0],
-                        week: week,
-                        fertilizers: {
-                            bottle1: parseFloat((Math.random() * 3 + 1).toFixed(1)),
-                            bottle2: parseFloat((Math.random() * 2.5 + 1.5).toFixed(1)),
-                            bottle3: parseFloat((Math.random() * 1.5 + 0.5).toFixed(1)),
-                            bottle4: parseFloat((Math.random() * 1 + 0.3).toFixed(1))
-                        },
-                        parameters: {
-                            ec: Math.floor(Math.random() * 150 + 250),
-                            po4: parseFloat((Math.random() * 0.8 + 0.2).toFixed(2)),
-                            no2: parseFloat((Math.random() * 0.1).toFixed(2)),
-                            no3: parseFloat((Math.random() * 15 + 5).toFixed(1)),
-                            k: parseFloat((Math.random() * 10 + 10).toFixed(1)),
-                            ca: parseFloat((Math.random() * 20 + 30).toFixed(1)),
-                            mg: parseFloat((Math.random() * 10 + 5).toFixed(1)),
-                            ph: parseFloat((Math.random() * 0.8 + 6.2).toFixed(1))
-                        },
-                        notes: getRandomNote()
-                    };
-                    
-                    records.push(record);
-                }
-                
-                records.sort((a, b) => new Date(a.date) - new Date(b.date));
-                updateDisplay();
-                
-                setTimeout(() => {
-                    addCheckboxListeners();
-                    document.getElementById('customNO3').checked = true;
-                    document.getElementById('customPO4').checked = true;
-                    document.getElementById('customBottle1').checked = true;
-                    updateCustomChart();
-                }, 500);
-                
-                showAnimatedToast('🎲 Dati demo di 3 mesi generati con successo!', 'success');
-            }
-        }
-
-        function getRandomNote() {
-            const notes = [
-                "Piante in ottima salute, crescita vigorosa",
-                "Leggera presenza di alghe verdi sui vetri",
-                "Cambio d'acqua del 30% effettuato",
-                "Potatura delle piante a crescita rapida",
-                "Aggiunto nuovo CO2, pH leggermente sceso",
-                "Fertilizzazione ridotta per eccesso di nitrati",
-                "Piante rosse mostrano bella colorazione",
-                "Testato nuovo dosaggio dopo ricerca",
-                "Alghe filamentose rimosse manualmente",
-                "Pulizia del filtro e manutenzione",
-                "Aggiunte nuove piante tappezzanti",
-                "",
-                ""
-            ];
-            return notes[Math.floor(Math.random() * notes.length)];
-        }
-
-        function exportData() {
-            const dataStr = JSON.stringify(records, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            const url = URL.createObjectURL(dataBlob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `aquafert-data-${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-            URL.revokeObjectURL(url);
-            showAnimatedToast('💾 Dati esportati con successo!', 'success');
-        }
-
-        function importData() {
-            document.getElementById('fileInput').click();
-        }
-
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const importedRecords = JSON.parse(e.target.result);
-                        if (Array.isArray(importedRecords)) {
-                            records = importedRecords;
-                            records.sort((a, b) => new Date(a.date) - new Date(b.date));
-                            updateDisplay();
-                            showAnimatedToast('📂 Dati importati con successo!', 'success');
-                        } else {
-                            throw new Error('Formato file non valido');
-                        }
-                    } catch (error) {
-                        showAnimatedToast('❌ Errore nell\'importazione del file!', 'error');
-                    }
-                };
-                reader.readAsText(file);
-            }
-        });
-
-        function formatDate(dateString) {
-            return new Date(dateString).toLocaleDateString('it-IT');
-        }
-
-        function showAnimatedToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = 'toast-notification';
-            
-            const borderColor = {
-                'success': '#4caf50',
-                'warning': '#ff9800', 
-                'error': '#f44336',
-                'info': '#2196f3'
-            };
-            
-            toast.style.borderColor = borderColor[type] || borderColor.success;
-            toast.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <span>${message}</span>
-                    <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
-                </div>
-            `;
-            
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                if (toast.parentElement) {
-                    toast.style.animation = 'slideInRight 0.5s ease-out reverse';
-                    setTimeout(() => toast.remove(), 500);
-                }
-            }, 4000);
-        }
-
-        document.addEventListener('shown.bs.tab', function (event) {
-            if (event.target.id === 'charts-tab') {
-                const loadingEl = document.getElementById('charts-loading');
-                const errorEl = document.getElementById('charts-error');
-                const contentEl = document.getElementById('charts-content');
-                
-                if (typeof Chart !== 'undefined') {
-                    if (loadingEl) loadingEl.style.display = 'block';
-                    if (errorEl) errorEl.style.display = 'none';
-                    setTimeout(() => {
-                        updateCharts();
-                        addCheckboxListeners();
-                    }, 200);
-                } else {
-                    if (loadingEl) loadingEl.style.display = 'none';
-                    if (errorEl) errorEl.style.display = 'block';
-                    if (contentEl) contentEl.style.display = 'none';
-                    showAnimatedToast('⚠️ Chart.js non caricato. Ricarica la pagina.', 'error');
-                }
-            }
-        });
-
-        console.log('🌿 AquaFert Pro inizializzato');
-        console.log('📧 Per configurare il database, sostituisci SUPABASE_URL e SUPABASE_ANON_KEY');
-        console.log('💾 Modalità attuale:', isOnlineMode ? 'Online (Database)' : 'Offline (Locale)');
-    </script>
-</body>
-</html>
+                            ticks: { color: '#2d5a27'
