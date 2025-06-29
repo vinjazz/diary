@@ -2518,3 +2518,415 @@ CREATE POLICY "Users can manage their own records" ON fertilization_records
             if (records.length === 0 || typeof Chart === 'undefined') {
                 console.log('Records o Chart non disponibili per grafico custom');
                 return;
+				
+				}
+            
+            const selectedParams = [];
+            const paramLabels = {
+                bottle1: '🟡 Flacone 1',
+                bottle2: '🔵 Flacone 2', 
+                bottle3: '🟢 Flacone 3',
+                bottle4: '🟠 Flacone 4',
+                no3: '🟢 NO3',
+                po4: '🔵 PO4',
+                no2: '🟣 NO2',
+                k: '🟡 K',
+                ca: '⚪ Ca',
+                mg: '🟠 Mg',
+                ec: '⚡ EC',
+                ph: '🔴 pH'
+            };
+            
+            const paramColors = {
+                bottle1: '#ff9800',
+                bottle2: '#2196f3',
+                bottle3: '#4caf50',
+                bottle4: '#9c27b0',
+                no3: '#4caf50',
+                po4: '#2196f3',
+                no2: '#9c27b0',
+                k: '#ffc107',
+                ca: '#607d8b',
+                mg: '#ff9800',
+                ec: '#ff5722',
+                ph: '#e91e63'
+            };
+            
+            // Get selected parameters
+            document.querySelectorAll('#charts-content .form-check-input[type="checkbox"]:checked').forEach(checkbox => {
+                selectedParams.push(checkbox.value);
+            });
+            
+            if (selectedParams.length === 0) {
+                updateChart('customChart', {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: []
+                    }
+                });
+                return;
+            }
+            
+            const datasets = selectedParams.map(param => {
+                let data;
+                if (param.startsWith('bottle')) {
+                    data = records.map(r => r.fertilizers[param]);
+                } else {
+                    data = records.map(r => r.parameters[param]);
+                }
+                
+                return {
+                    label: paramLabels[param],
+                    data: data,
+                    borderColor: paramColors[param],
+                    backgroundColor: paramColors[param] + '20',
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 3
+                };
+            });
+            
+            updateChart('customChart', {
+                type: 'line',
+                data: {
+                    labels: records.map(r => `S${r.week}`),
+                    datasets: datasets
+                }
+            });
+        }
+
+        function selectAllCustomChart() {
+            document.querySelectorAll('#charts-content .form-check-input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            updateCustomChart();
+        }
+
+        function clearAllCustomChart() {
+            document.querySelectorAll('#charts-content .form-check-input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateCustomChart();
+        }
+
+        function selectDefaultCustomChart() {
+            clearAllCustomChart();
+            // Seleziona i parametri più importanti
+            const defaultParams = ['bottle1', 'bottle2', 'no3', 'po4', 'ec', 'ph'];
+            defaultParams.forEach(param => {
+                const checkbox = document.querySelector(`#charts-content input[value="${param}"]`);
+                if (checkbox) checkbox.checked = true;
+            });
+            updateCustomChart();
+        }
+
+        function updateStatistics() {
+            const container = document.getElementById('statisticsContainer');
+            
+            if (records.length < 3) {
+                container.innerHTML = `
+                    <div class="parameter-card text-center">
+                        <h6>📊 Statistiche disponibili con almeno 3 record</h6>
+                        <p>Aggiungi più record per visualizzare statistiche dettagliate!</p>
+                        <button class="btn btn-green" onclick="generateSampleData()">
+                            <i class="fas fa-magic"></i> Genera Dati Demo (3 mesi)
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            const stats = calculateStatistics();
+            
+            container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-3 mb-4">
+                        <div class="stat-card">
+                            <h6>📊 Totale Record</h6>
+                            <h2>${records.length}</h2>
+                            <small>Record inseriti</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="stat-card">
+                            <h6>🧪 Media Fertilizzanti</h6>
+                            <h2>${stats.avgFertilizers.toFixed(1)} ml</h2>
+                            <small>Per settimana</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="stat-card">
+                            <h6>⚡ EC Medio</h6>
+                            <h2>${stats.avgEC.toFixed(0)} μS/cm</h2>
+                            <small>Conducibilità media</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-4">
+                        <div class="stat-card">
+                            <h6>🔴 pH Medio</h6>
+                            <h2>${stats.avgPH.toFixed(1)}</h2>
+                            <small>Acidità media</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="parameter-card">
+                    <h6>📈 Riepilogo Parametri</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>🧪 Fertilizzanti totali utilizzati:</strong><br>
+                            🟡 Flacone 1: ${stats.totalFertilizers.bottle1.toFixed(1)} ml<br>
+                            🔵 Flacone 2: ${stats.totalFertilizers.bottle2.toFixed(1)} ml<br>
+                            🟢 Flacone 3: ${stats.totalFertilizers.bottle3.toFixed(1)} ml<br>
+                            🟠 Flacone 4: ${stats.totalFertilizers.bottle4.toFixed(1)} ml
+                        </div>
+                        <div class="col-md-6">
+                            <strong>📊 Range parametri:</strong><br>
+                            🟢 NO3: ${stats.ranges.no3.min.toFixed(1)} - ${stats.ranges.no3.max.toFixed(1)} mg/l<br>
+                            🔵 PO4: ${stats.ranges.po4.min.toFixed(2)} - ${stats.ranges.po4.max.toFixed(2)} mg/l<br>
+                            ⚡ EC: ${stats.ranges.ec.min.toFixed(0)} - ${stats.ranges.ec.max.toFixed(0)} μS/cm<br>
+                            🔴 pH: ${stats.ranges.ph.min.toFixed(1)} - ${stats.ranges.ph.max.toFixed(1)}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="parameter-card">
+                    <h6>💡 Consigli basati sui dati</h6>
+                    ${generateAdvice(stats)}
+                </div>
+            `;
+        }
+
+        function calculateStatistics() {
+            const totalFertilizers = {
+                bottle1: records.reduce((sum, r) => sum + r.fertilizers.bottle1, 0),
+                bottle2: records.reduce((sum, r) => sum + r.fertilizers.bottle2, 0),
+                bottle3: records.reduce((sum, r) => sum + r.fertilizers.bottle3, 0),
+                bottle4: records.reduce((sum, r) => sum + r.fertilizers.bottle4, 0)
+            };
+
+            const avgFertilizers = (totalFertilizers.bottle1 + totalFertilizers.bottle2 + 
+                                  totalFertilizers.bottle3 + totalFertilizers.bottle4) / records.length;
+
+            const avgEC = records.reduce((sum, r) => sum + r.parameters.ec, 0) / records.length;
+            const avgPH = records.reduce((sum, r) => sum + r.parameters.ph, 0) / records.length;
+
+            const ranges = {
+                no3: {
+                    min: Math.min(...records.map(r => r.parameters.no3)),
+                    max: Math.max(...records.map(r => r.parameters.no3))
+                },
+                po4: {
+                    min: Math.min(...records.map(r => r.parameters.po4)),
+                    max: Math.max(...records.map(r => r.parameters.po4))
+                },
+                ec: {
+                    min: Math.min(...records.map(r => r.parameters.ec)),
+                    max: Math.max(...records.map(r => r.parameters.ec))
+                },
+                ph: {
+                    min: Math.min(...records.map(r => r.parameters.ph)),
+                    max: Math.max(...records.map(r => r.parameters.ph))
+                }
+            };
+
+            return {
+                totalFertilizers,
+                avgFertilizers,
+                avgEC,
+                avgPH,
+                ranges
+            };
+        }
+
+        function generateAdvice(stats) {
+            let advice = [];
+
+            if (stats.avgEC < 200) {
+                advice.push('⚡ L\'EC medio è basso. Considera di aumentare leggermente i fertilizzanti.');
+            } else if (stats.avgEC > 400) {
+                advice.push('⚡ L\'EC medio è alto. Potresti ridurre leggermente i fertilizzanti.');
+            }
+
+            if (stats.avgPH < 6.0) {
+                advice.push('🔴 Il pH medio è troppo acido. Considera l\'uso di correttori di pH.');
+            } else if (stats.avgPH > 7.5) {
+                advice.push('🔴 Il pH medio è troppo basico. Considera l\'uso di acidificanti.');
+            }
+
+            if (stats.ranges.no3.max > 30) {
+                advice.push('🟢 I nitrati hanno raggiunto livelli elevati. Monitora attentamente.');
+            }
+
+            if (stats.ranges.po4.max > 2) {
+                advice.push('🔵 I fosfati sono elevati. Potresti ridurre il Flacone 4.');
+            }
+
+            if (advice.length === 0) {
+                advice.push('✅ I parametri sembrano ben bilanciati! Continua così.');
+            }
+
+            return advice.map(a => `<p>${a}</p>`).join('');
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('it-IT', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+
+        function sortRecords() {
+            records.sort((a, b) => new Date(b.date) - new Date(a.date));
+            updateDisplay();
+            showAnimatedToast('📊 Record ordinati per data!', 'success');
+        }
+
+        async function deleteRecord(id) {
+            if (confirm('Sei sicuro di voler eliminare questo record?')) {
+                // Se online e loggato, elimina dal database
+                if (isOnlineMode && currentUser && supabase) {
+                    const { error } = await deleteRecordFromDatabase(id);
+                    if (!error) {
+                        await loadUserRecords();
+                        showAnimatedToast('✅ Record eliminato dal database!', 'success');
+                    }
+                } else {
+                    // Modalità offline: elimina localmente
+                    records = records.filter(r => r.id !== parseInt(id) && r.id !== id);
+                    updateDisplay();
+                    showAnimatedToast('✅ Record eliminato localmente!', 'success');
+                }
+            }
+        }
+
+        function clearAllRecords() {
+            if (confirm('⚠️ Questa azione eliminerà TUTTI i record. Sei sicuro?')) {
+                if (confirm('🔴 ULTIMA CONFERMA: Vuoi davvero eliminare tutto?')) {
+                    records = [];
+                    updateDisplay();
+                    showAnimatedToast('🗑️ Tutti i record sono stati eliminati!', 'warning');
+                }
+            }
+        }
+
+        function exportData() {
+            if (records.length === 0) {
+                showAnimatedToast('❌ Nessun record da esportare!', 'error');
+                return;
+            }
+
+            const dataStr = JSON.stringify(records, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `aquafert_${new Date().toISOString().split('T')[0]}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            showAnimatedToast('✅ Dati esportati con successo!', 'success');
+        }
+
+        function importData() {
+            document.getElementById('fileInput').click();
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                try {
+                    const importedData = JSON.parse(event.target.result);
+                    if (Array.isArray(importedData)) {
+                        records = importedData;
+                        updateDisplay();
+                        showAnimatedToast(`✅ Importati ${records.length} record!`, 'success');
+                    } else {
+                        showAnimatedToast('❌ Formato file non valido!', 'error');
+                    }
+                } catch (error) {
+                    showAnimatedToast('❌ Errore lettura file!', 'error');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        });
+
+        function generateSampleData() {
+            const baseDate = new Date();
+            baseDate.setMonth(baseDate.getMonth() - 3);
+            
+            const sampleRecords = [];
+            const numRecords = 12;
+            
+            for (let i = 0; i < numRecords; i++) {
+                const recordDate = new Date(baseDate);
+                recordDate.setDate(recordDate.getDate() + (i * 7));
+                
+                const week = Math.ceil(((recordDate - new Date(recordDate.getFullYear(), 0, 1)) / 86400000 + 
+                            new Date(recordDate.getFullYear(), 0, 1).getDay() + 1) / 7);
+                
+                sampleRecords.push({
+                    id: Date.now() + i,
+                    date: recordDate.toISOString().split('T')[0],
+                    week: week,
+                    fertilizers: {
+                        bottle1: Math.round(Math.random() * 3 + 2),
+                        bottle2: Math.round(Math.random() * 3 + 2),
+                        bottle3: Math.round(Math.random() * 2 + 1),
+                        bottle4: Math.round(Math.random() * 2 + 1)
+                    },
+                    parameters: {
+                        ec: Math.round(Math.random() * 100 + 250),
+                        po4: parseFloat((Math.random() * 1 + 0.5).toFixed(2)),
+                        no2: parseFloat((Math.random() * 0.05).toFixed(2)),
+                        no3: Math.round(Math.random() * 10 + 15),
+                        k: Math.round(Math.random() * 5 + 15),
+                        ca: Math.round(Math.random() * 10 + 35),
+                        mg: Math.round(Math.random() * 3 + 7),
+                        ph: parseFloat((Math.random() * 0.5 + 6.5).toFixed(1))
+                    },
+                    notes: [
+                        'Piante in ottima salute, crescita vigorosa',
+                        'Leggera presenza di alghe verdi',
+                        'Cambio acqua 30% effettuato',
+                        'Aggiunte nuove piante',
+                        'Potatura effettuata',
+                        'Tutto stabile'
+                    ][Math.floor(Math.random() * 6)]
+                });
+            }
+            
+            records = sampleRecords;
+            updateDisplay();
+            showAnimatedToast(`✅ Generati ${numRecords} record demo degli ultimi 3 mesi!`, 'success');
+        }
+
+        function showAnimatedToast(message, type = 'info') {
+            const toastId = 'toast-' + Date.now();
+            const toastHTML = `
+                <div id="${toastId}" class="toast-notification alert alert-${type === 'error' ? 'danger' : type === 'warning' ? 'warning' : type === 'success' ? 'success' : 'info'}">
+                    ${message}
+                </div>
+            `;
+            
+            document.body.insertAdjacentHTML('beforeend', toastHTML);
+            
+            const toast = document.getElementById(toastId);
+            
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
