@@ -1366,7 +1366,7 @@
             }
         }
 
-        // Gestione database
+        // Gestione database - VERSIONE CORRETTA
         async function saveRecordToDatabase(record) {
             if (!supabase || !currentUser) {
                 console.log('Modalità offline: salvando localmente');
@@ -1374,6 +1374,7 @@
             }
 
             try {
+                // NON includere l'id nel record da salvare nel database
                 const dbRecord = {
                     user_id: currentUser.id,
                     date: record.date,
@@ -2090,7 +2091,7 @@ CREATE POLICY "Users can manage their own records" ON fertilization_records
             });
         }
 
-        // Form submission
+        // Form submission - VERSIONE CORRETTA
         document.getElementById('recordForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -2111,9 +2112,8 @@ CREATE POLICY "Users can manage their own records" ON fertilization_records
                 if (icon) icon.classList.add('d-none');
                 submitBtn.disabled = true;
 
-                // Costruisci record
+                // Costruisci record - SENZA ID per il database
                 const record = {
-                    id: Date.now(),
                     date: document.getElementById('recordDate').value,
                     week: parseInt(document.getElementById('week').value),
                     fertilizers: {
@@ -2141,12 +2141,14 @@ CREATE POLICY "Users can manage their own records" ON fertilization_records
                 // Salva nel database se online E loggato
                 if (isOnlineMode && currentUser && supabase) {
                     try {
-                        const { error } = await saveRecordToDatabase(record);
+                        const { data, error } = await saveRecordToDatabase(record);
                         if (error) {
                             console.error('Errore database, fallback locale:', error);
-                            // Fallback: salva localmente
+                            // Fallback: salva localmente con ID temporaneo
+                            record.id = Date.now();
                             records.push(record);
                             records.sort((a, b) => new Date(a.date) - new Date(b.date));
+                            updateDisplay();
                             showAnimatedToast('⚠️ Salvato localmente (errore database)', 'warning');
                         } else {
                             // Ricarica dal database per sincronizzare
@@ -2155,15 +2157,19 @@ CREATE POLICY "Users can manage their own records" ON fertilization_records
                         }
                     } catch (dbError) {
                         console.error('Eccezione database:', dbError);
-                        // Fallback: salva localmente
+                        // Fallback: salva localmente con ID temporaneo
+                        record.id = Date.now();
                         records.push(record);
                         records.sort((a, b) => new Date(a.date) - new Date(b.date));
+                        updateDisplay();
                         showAnimatedToast('⚠️ Salvato localmente (problema database)', 'warning');
                     }
                 } else {
-                    // Modalità offline: salva localmente
+                    // Modalità offline: salva localmente con ID temporaneo
+                    record.id = Date.now();
                     records.push(record);
                     records.sort((a, b) => new Date(a.date) - new Date(b.date));
+                    updateDisplay();
                     
                     if (!isOnlineMode) {
                         showAnimatedToast('✅ Record salvato localmente!', 'success');
@@ -2172,12 +2178,15 @@ CREATE POLICY "Users can manage their own records" ON fertilization_records
                     }
                 }
                 
-                // Aggiorna display
-                updateDisplay();
-                
                 // Reset form
                 this.reset();
                 document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
+                
+                // Ricalcola settimana corrente
+                const now = new Date();
+                const start = new Date(now.getFullYear(), 0, 1);
+                const week = Math.ceil(((now - start) / 86400000 + start.getDay() + 1) / 7);
+                document.getElementById('week').value = week;
                 
             } catch (error) {
                 console.error('Errore generale nel salvataggio:', error);
@@ -2518,8 +2527,7 @@ CREATE POLICY "Users can manage their own records" ON fertilization_records
             if (records.length === 0 || typeof Chart === 'undefined') {
                 console.log('Records o Chart non disponibili per grafico custom');
                 return;
-				
-				}
+            }
             
             const selectedParams = [];
             const paramLabels = {
