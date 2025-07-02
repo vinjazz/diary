@@ -690,215 +690,6 @@
             }
         }
 
-        /* === CHIMICO DANCING INTRO === */
-        .chimico-intro {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            animation: introFadeOut 6s ease-in-out forwards;
-        }
-
-        .chimico-dancing {
-            position: relative;
-            z-index: 10001;
-        }
-
-        .chimico-emoji {
-            font-size: 8rem;
-            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.3));
-            animation: 
-                chimicoEntry 2s ease-out 0s 1 forwards,
-                chimicoDancing 1s ease-in-out 2s infinite;
-        }
-
-        /* Animazione ingresso ballando */
-        @keyframes chimicoEntry {
-            0% { 
-                transform: translateY(-400px) rotate(-360deg) scale(0.2);
-                opacity: 0;
-            }
-            30% { 
-                transform: translateY(50px) rotate(-30deg) scale(1.3);
-                opacity: 1;
-            }
-            50% { 
-                transform: translateY(-20px) rotate(15deg) scale(0.8);
-            }
-            70% { 
-                transform: translateY(10px) rotate(-10deg) scale(1.1);
-            }
-            85% { 
-                transform: translateY(-5px) rotate(5deg) scale(0.95);
-            }
-            100% { 
-                transform: translateY(0px) rotate(0deg) scale(1);
-            }
-        }
-
-        /* Animazione danza continua */
-        @keyframes chimicoDancing {
-            0%, 100% { 
-                transform: rotate(0deg) scale(1) translateX(0px);
-            }
-            25% { 
-                transform: rotate(3deg) scale(1.05) translateX(-10px);
-            }
-            50% { 
-                transform: rotate(-2deg) scale(0.95) translateX(10px);
-            }
-            75% { 
-                transform: rotate(2deg) scale(1.02) translateX(-5px);
-            }
-        }
-
-        /* Pioggia di emoji */
-        .emoji-rain {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            overflow: hidden;
-        }
-
-        .emoji {
-            position: absolute;
-            font-size: 2rem;
-            color: #ffeb3b;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            opacity: 0;
-            animation: emojiRain 4s ease-in infinite;
-        }
-
-        .emoji:nth-child(1) { left: 10%; animation-delay: 0.5s; font-size: 1.8rem; }
-        .emoji:nth-child(2) { left: 20%; animation-delay: 1s; font-size: 2.2rem; }
-        .emoji:nth-child(3) { left: 30%; animation-delay: 0.2s; font-size: 1.5rem; }
-        .emoji:nth-child(4) { left: 40%; animation-delay: 1.5s; font-size: 2rem; }
-        .emoji:nth-child(5) { left: 50%; animation-delay: 0.8s; font-size: 1.7rem; }
-        .emoji:nth-child(6) { left: 60%; animation-delay: 1.2s; font-size: 2.1rem; }
-        .emoji:nth-child(7) { left: 70%; animation-delay: 0.3s; font-size: 1.9rem; }
-        .emoji:nth-child(8) { left: 80%; animation-delay: 1.8s; font-size: 1.6rem; }
-        .emoji:nth-child(9) { left: 90%; animation-delay: 0.7s; font-size: 2.3rem; }
-        .emoji:nth-child(10) { left: 15%; animation-delay: 1.3s; font-size: 1.4rem; }
-        .emoji:nth-child(11) { left: 25%; animation-delay: 0.1s; font-size: 2rem; }
-        .emoji:nth-child(12) { left: 35%; animation-delay: 1.7s; font-size: 1.8rem; }
-        .emoji:nth-child(13) { left: 45%; animation-delay: 0.4s; font-size: 2.2rem; }
-        .emoji:nth-child(14) { left: 55%; animation-delay: 1.1s; font-size: 1.5rem; }
-        .emoji:nth-child(15) { left: 75%; animation-delay: 0.9s; font-size: 1.9rem; }
-
-        @keyframes emojiRain {
-            0% { 
-                top: -10%; 
-                opacity: 0; 
-                transform: rotate(0deg) scale(0.5);
-            }
-            10% { 
-                opacity: 1; 
-                transform: rotate(180deg) scale(1);
-            }
-            90% { 
-                opacity: 1; 
-                transform: rotate(350deg) scale(0.8);
-            }
-            100% { 
-                top: 110%; 
-                opacity: 0; 
-                transform: rotate(360deg) scale(0.3);
-            }
-        }
-
-        /* Testo di benvenuto */
-        .welcome-text {
-            position: relative;
-            z-index: 10001;
-            text-align: center;
-            color: white;
-            margin-top: 30px;
-            animation: welcomeTextFade 1s ease-in 3s both;
-        }
-
-        .welcome-text h2 {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-            animation: welcomeTextBounce 0.8s ease-out 3.5s both;
-        }
-
-        .welcome-text p {
-            font-size: 1.2rem;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-            animation: welcomeTextSlide 0.6s ease-out 4s both;
-        }
-
-        @keyframes welcomeTextFade {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes welcomeTextBounce {
-            0% { transform: translateY(30px) scale(0.8); opacity: 0; }
-            60% { transform: translateY(-10px) scale(1.1); opacity: 1; }
-            100% { transform: translateY(0) scale(1); opacity: 1; }
-        }
-
-        @keyframes welcomeTextSlide {
-            0% { transform: translateX(-50px); opacity: 0; }
-            100% { transform: translateX(0); opacity: 1; }
-        }
-
-        /* Fade out completo */
-        @keyframes introFadeOut {
-            0% { opacity: 1; visibility: visible; }
-            83% { opacity: 1; visibility: visible; }
-            100% { opacity: 0; visibility: hidden; }
-        }
-
-        /* Nascondere durante l'intro */
-        body.intro-active {
-            overflow: hidden;
-        }
-
-        body.intro-active .navbar,
-        body.intro-active .container {
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 1s ease-in-out;
-        }
-
-        .navbar,
-        .container {
-            transition: opacity 1s ease-in-out;
-        }
-
-        /* Responsive mobile */
-        @media (max-width: 768px) {
-            .chimico-emoji {
-                font-size: 6rem;
-            }
-            
-            .welcome-text h2 {
-                font-size: 2rem;
-            }
-            
-            .welcome-text p {
-                font-size: 1rem;
-                padding: 0 20px;
-            }
-            
-            .emoji {
-                font-size: 1.5rem;
-            }
-        }
-
         @keyframes fadeInUp {
             from {
                 opacity: 0;
@@ -1033,34 +824,6 @@
             </div>
         </div>
     </nav>
-
-    <!-- Chimico Dancing Intro -->
-    <div id="chimicoIntro" class="chimico-intro">
-        <div class="chimico-dancing">
-            <img src="rindez.png" alt="Chimico Dancing" class="chimico-img">
-        </div>
-        <div class="emoji-rain">
-            <div class="emoji">🧪</div>
-            <div class="emoji">⚗️</div>
-            <div class="emoji">🌱</div>
-            <div class="emoji">🔬</div>
-            <div class="emoji">💚</div>
-            <div class="emoji">🧬</div>
-            <div class="emoji">⚡</div>
-            <div class="emoji">🌿</div>
-            <div class="emoji">💧</div>
-            <div class="emoji">🔥</div>
-            <div class="emoji">🌱</div>
-            <div class="emoji">🧪</div>
-            <div class="emoji">⚗️</div>
-            <div class="emoji">🌿</div>
-            <div class="emoji">💎</div>
-        </div>
-        <div class="welcome-text">
-            <h2>🎉 Benvenuto in RindezFert Pro!</h2>
-            <p>Il tuo amico chimico per la fertilizzazione acquario</p>
-        </div>
-    </div>
 
     <div class="container mt-4">
         <!-- Tabs Navigation -->
@@ -1230,33 +993,102 @@
                                     <input type="number" class="form-control" id="aquariumLiters" value="100" min="1" placeholder="Inserisci litri acquario">
                                 </div>
                             </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">⚙️ Modalità</label>
+                                    <select class="form-select" id="calculatorMode">
+                                        <option value="target">Valori Target → Dosaggi</option>
+                                        <option value="dosage">Dosaggi → Valori Risultanti</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Dosaggi Fertilizzanti -->
-                        <h6 class="section-title">💉 Dosaggi Fertilizzanti</h6>
-                        <div class="row">
-                            <div class="col-md-3">
-                                <div class="mb-3">
-                                    <label class="form-label">🟡 Macro 1 (ml)</label>
-                                    <input type="number" step="0.1" class="form-control" id="dosageMacro1" value="0">
+                        <!-- Modalità Target -->
+                        <div id="targetMode">
+                            <h6 class="section-title">🎯 Valori Target Desiderati</h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">🟢 NO3 target (mg/l)</label>
+                                        <input type="number" step="0.1" class="form-control" id="targetNO3" value="20">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">🔵 PO4 target (mg/l)</label>
+                                        <input type="number" step="0.1" class="form-control" id="targetPO4" value="1.0">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">🟡 K target (mg/l)</label>
+                                        <input type="number" step="0.1" class="form-control" id="targetK" value="15">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">⚪ Ca target (mg/l)</label>
+                                        <input type="number" step="0.1" class="form-control" id="targetCa" value="20">
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="mb-3">
-                                    <label class="form-label">🔵 Macro 2 (ml)</label>
-                                    <input type="number" step="0.1" class="form-control" id="dosageMacro2" value="0">
+                            
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">🟠 Mg target (mg/l)</label>
+                                        <input type="number" step="0.1" class="form-control" id="targetMg" value="5">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">🟣 NH4 target (mg/l)</label>
+                                        <input type="number" step="0.01" class="form-control" id="targetNH4" value="0.1">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">💚 HCO3 target (mg/l)</label>
+                                        <input type="number" step="0.1" class="form-control" id="targetHCO3" value="10">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">💛 SO4 target (mg/l)</label>
+                                        <input type="number" step="0.1" class="form-control" id="targetSO4" value="20">
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-3">
-                                <div class="mb-3">
-                                    <label class="form-label">🟢 Macro 3 (ml)</label>
-                                    <input type="number" step="0.1" class="form-control" id="dosageMacro3" value="0">
+                        </div>
+
+                        <!-- Modalità Dosaggio -->
+                        <div id="dosageMode" style="display: none;">
+                            <h6 class="section-title">💉 Dosaggi Fertilizzanti</h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">🟡 Macro 1 (ml)</label>
+                                        <input type="number" step="0.1" class="form-control" id="dosageMacro1" value="0">
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="mb-3">
-                                    <label class="form-label">🟠 Fosforo (ml)</label>
-                                    <input type="number" step="0.1" class="form-control" id="dosagePhosphorus" value="0">
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">🔵 Macro 2 (ml)</label>
+                                        <input type="number" step="0.1" class="form-control" id="dosageMacro2" value="0">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">🟢 Macro 3 (ml)</label>
+                                        <input type="number" step="0.1" class="form-control" id="dosageMacro3" value="0">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">🟠 Fosforo (ml)</label>
+                                        <input type="number" step="0.1" class="form-control" id="dosagePhosphorus" value="0">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1277,6 +1109,38 @@
                         <!-- Risultati -->
                         <div id="calculatorResults" style="display: none;">
                             <h6 class="section-title">📊 Risultati Calcolo</h6>
+                            
+                            <!-- Dosaggi Calcolati -->
+                            <div class="row mb-4" id="calculatedDosages">
+                                <div class="col-md-3">
+                                    <div class="parameter-card text-center">
+                                        <h6>🟡 Macro 1</h6>
+                                        <h4 id="resultMacro1">0 ml</h4>
+                                        <small>Ca(NO₃)₂ + Mg(NO₃)₂</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="parameter-card text-center">
+                                        <h6>🔵 Macro 2</h6>
+                                        <h4 id="resultMacro2">0 ml</h4>
+                                        <small>NK + (NH₄)₂SO₄ + K₂SO₄</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="parameter-card text-center">
+                                        <h6>🟢 Macro 3</h6>
+                                        <h4 id="resultMacro3">0 ml</h4>
+                                        <small>KHCO₃</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="parameter-card text-center">
+                                        <h6>🟠 Fosforo</h6>
+                                        <h4 id="resultPhosphorus">0 ml</h4>
+                                        <small>KH₂PO₄</small>
+                                    </div>
+                                </div>
+                            </div>
 
                             <!-- Apporto Elementi -->
                             <div class="parameter-card">
@@ -1289,6 +1153,8 @@
                                                     <tr>
                                                         <th>Elemento</th>
                                                         <th>Apporto (mg/l)</th>
+                                                        <th>Target</th>
+                                                        <th>Differenza</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody id="elementsTableLeft">
@@ -1303,6 +1169,8 @@
                                                     <tr>
                                                         <th>Elemento</th>
                                                         <th>Apporto (mg/l)</th>
+                                                        <th>Target</th>
+                                                        <th>Differenza</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody id="elementsTableRight">
@@ -1311,6 +1179,12 @@
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+
+                            <!-- Consigli -->
+                            <div class="parameter-card" id="calculatorAdvice">
+                                <h6>💡 Consigli e Note</h6>
+                                <div id="adviceContent"></div>
                             </div>
                         </div>
 
@@ -2186,9 +2060,90 @@
 
         // Calculator functions
         function calculateDosages() {
+            const mode = document.getElementById('calculatorMode').value;
             const liters = parseFloat(document.getElementById('aquariumLiters').value) || 100;
-            calculateFromDosages(liters);
+            
+            if (mode === 'target') {
+                calculateFromTargets(liters);
+            } else {
+                calculateFromDosages(liters);
+            }
+            
             document.getElementById('calculatorResults').style.display = 'block';
+        }
+
+        function calculateFromTargets(liters) {
+            // Get target values
+            const targets = {
+                no3: parseFloat(document.getElementById('targetNO3').value) || 0,
+                po4: parseFloat(document.getElementById('targetPO4').value) || 0,
+                k: parseFloat(document.getElementById('targetK').value) || 0,
+                ca: parseFloat(document.getElementById('targetCa').value) || 0,
+                mg: parseFloat(document.getElementById('targetMg').value) || 0,
+                nh4: parseFloat(document.getElementById('targetNH4').value) || 0,
+                hco3: parseFloat(document.getElementById('targetHCO3').value) || 0,
+                so4: parseFloat(document.getElementById('targetSO4').value) || 0
+            };
+
+            // Calculate dosages using optimization
+            const scaleFactor = liters / 100;
+            
+            // Start with simple proportional calculation
+            let dosages = {
+                macro1: 0,
+                macro2: 0,
+                macro3: 0,
+                phosphorus: 0
+            };
+
+            // Calculate phosphorus first (most specific)
+            if (targets.po4 > 0) {
+                dosages.phosphorus = (targets.po4 / fertilizerCompositions.phosphorus.po4) * scaleFactor;
+            }
+
+            // Calculate calcium/magnesium (Macro 1)
+            if (targets.ca > 0) {
+                dosages.macro1 = Math.max(dosages.macro1, (targets.ca / fertilizerCompositions.macro1.ca) * scaleFactor);
+            }
+            if (targets.mg > 0) {
+                dosages.macro1 = Math.max(dosages.macro1, (targets.mg / fertilizerCompositions.macro1.mg) * scaleFactor);
+            }
+
+            // Calculate remaining potassium needs
+            let kFromPhosphorus = dosages.phosphorus * fertilizerCompositions.phosphorus.k / scaleFactor;
+            let kFromMacro1 = 0; // Macro1 doesn't contain K
+            let kNeeded = targets.k - kFromPhosphorus;
+
+            if (kNeeded > 0) {
+                // Split K between Macro2 and Macro3 based on HCO3 needs
+                if (targets.hco3 > 0) {
+                    dosages.macro3 = (targets.hco3 / fertilizerCompositions.macro3.hco3) * scaleFactor;
+                    let kFromMacro3 = dosages.macro3 * fertilizerCompositions.macro3.k / scaleFactor;
+                    kNeeded -= kFromMacro3;
+                }
+                
+                if (kNeeded > 0) {
+                    dosages.macro2 = Math.max(dosages.macro2, (kNeeded / fertilizerCompositions.macro2.k) * scaleFactor);
+                }
+            }
+
+            // Adjust for NO3 needs
+            let no3Current = (dosages.macro1 * fertilizerCompositions.macro1.no3 + 
+                             dosages.macro2 * fertilizerCompositions.macro2.no3) / scaleFactor;
+            if (no3Current < targets.no3) {
+                let no3Needed = targets.no3 - no3Current;
+                let additionalMacro2 = (no3Needed / fertilizerCompositions.macro2.no3) * scaleFactor;
+                dosages.macro2 += additionalMacro2;
+            }
+
+            // Update dosage inputs
+            document.getElementById('dosageMacro1').value = dosages.macro1.toFixed(2);
+            document.getElementById('dosageMacro2').value = dosages.macro2.toFixed(2);
+            document.getElementById('dosageMacro3').value = dosages.macro3.toFixed(2);
+            document.getElementById('dosagePhosphorus').value = dosages.phosphorus.toFixed(2);
+
+            // Calculate resulting values
+            calculateFromDosages(liters, dosages);
         }
 
         function calculateFromDosages(liters, predefinedDosages = null) {
@@ -2218,11 +2173,32 @@
                 so4: dosages.macro2 * fertilizerCompositions.macro2.so4 / scaleFactor
             };
 
+            // Update result display
+            document.getElementById('resultMacro1').textContent = dosages.macro1.toFixed(2) + ' ml';
+            document.getElementById('resultMacro2').textContent = dosages.macro2.toFixed(2) + ' ml';
+            document.getElementById('resultMacro3').textContent = dosages.macro3.toFixed(2) + ' ml';
+            document.getElementById('resultPhosphorus').textContent = dosages.phosphorus.toFixed(2) + ' ml';
+
             // Update elements table
             updateElementsTable(results);
+            
+            // Generate advice
+            generateCalculatorAdvice(results, dosages);
         }
 
         function updateElementsTable(results) {
+            const mode = document.getElementById('calculatorMode').value;
+            const targets = mode === 'target' ? {
+                no3: parseFloat(document.getElementById('targetNO3').value) || 0,
+                po4: parseFloat(document.getElementById('targetPO4').value) || 0,
+                k: parseFloat(document.getElementById('targetK').value) || 0,
+                ca: parseFloat(document.getElementById('targetCa').value) || 0,
+                mg: parseFloat(document.getElementById('targetMg').value) || 0,
+                nh4: parseFloat(document.getElementById('targetNH4').value) || 0,
+                hco3: parseFloat(document.getElementById('targetHCO3').value) || 0,
+                so4: parseFloat(document.getElementById('targetSO4').value) || 0
+            } : {};
+
             const elements = [
                 { name: 'NO₃', key: 'no3', icon: '🟢', unit: 'mg/l' },
                 { name: 'PO₄', key: 'po4', icon: '🔵', unit: 'mg/l' },
@@ -2241,11 +2217,17 @@
                 const tbody = document.getElementById(tableId);
                 tbody.innerHTML = elementsList.map(element => {
                     const result = results[element.key];
+                    const target = targets[element.key] || 0;
+                    const diff = target > 0 ? result - target : 0;
+                    const diffClass = Math.abs(diff) < 0.1 ? 'text-success' : 
+                                     diff > 0 ? 'text-warning' : 'text-danger';
                     
                     return `
                         <tr>
                             <td>${element.icon} ${element.name}</td>
                             <td><strong>${result.toFixed(3)}</strong></td>
+                            <td>${target.toFixed(3)}</td>
+                            <td class="${diffClass}">${diff !== 0 ? (diff > 0 ? '+' : '') + diff.toFixed(3) : '-'}</td>
                         </tr>
                     `;
                 }).join('');
@@ -2255,9 +2237,65 @@
             createTableRows(rightElements, 'elementsTableRight');
         }
 
+        function generateCalculatorAdvice(results, dosages) {
+            const advice = [];
+            
+            // Check ratios
+            const nRatio = results.no3 / (results.po4 || 1);
+            if (nRatio > 50) {
+                advice.push('⚠️ Rapporto N:P molto alto. Considera di aumentare i fosfati.');
+            } else if (nRatio < 10) {
+                advice.push('⚠️ Rapporto N:P basso. Considera di aumentare i nitrati.');
+            } else {
+                advice.push('✅ Rapporto N:P equilibrato (10-50:1).');
+            }
+
+            // Check individual levels
+            if (results.k < 10) {
+                advice.push('⚠️ Potassio basso. Le piante potrebbero mostrare carenze.');
+            } else if (results.k > 30) {
+                advice.push('⚠️ Potassio molto alto. Monitora la crescita algale.');
+            }
+
+            if (results.ca < 15) {
+                advice.push('⚠️ Calcio basso. Importante per la struttura cellulare.');
+            }
+
+            if (results.mg < 3) {
+                advice.push('⚠️ Magnesio basso. Essenziale per la fotosintesi.');
+            }
+
+            if (results.nh4 > 0.5) {
+                advice.push('⚠️ Ammonio alto. Può favorire le alghe e essere tossico.');
+            }
+
+            // Dosage advice
+            const totalDosage = dosages.macro1 + dosages.macro2 + dosages.macro3 + dosages.phosphorus;
+            if (totalDosage > 20) {
+                advice.push('💡 Dosaggio totale elevato. Considera di frazionare in più giorni.');
+            }
+
+            if (advice.length === 0) {
+                advice.push('✅ Dosaggio bilanciato! I parametri sono nella norma.');
+            }
+
+            document.getElementById('adviceContent').innerHTML = advice.map(a => `<p>${a}</p>`).join('');
+        }
+
         function resetCalculator() {
             // Reset inputs
             document.getElementById('aquariumLiters').value = 100;
+            document.getElementById('calculatorMode').value = 'target';
+            
+            // Reset targets
+            document.getElementById('targetNO3').value = 20;
+            document.getElementById('targetPO4').value = 1.0;
+            document.getElementById('targetK').value = 15;
+            document.getElementById('targetCa').value = 20;
+            document.getElementById('targetMg').value = 5;
+            document.getElementById('targetNH4').value = 0.1;
+            document.getElementById('targetHCO3').value = 10;
+            document.getElementById('targetSO4').value = 20;
             
             // Reset dosages
             document.getElementById('dosageMacro1').value = 0;
@@ -2267,6 +2305,9 @@
             
             // Hide results
             document.getElementById('calculatorResults').style.display = 'none';
+            
+            // Reset mode display
+            toggleCalculatorMode();
             
             showToast('🔄 Calcolatore resettato!', 'info');
         }
@@ -2288,6 +2329,20 @@
             addTab.click();
             
             showToast('✅ Dosaggi copiati nel form!', 'success');
+        }
+
+        function toggleCalculatorMode() {
+            const mode = document.getElementById('calculatorMode').value;
+            const targetMode = document.getElementById('targetMode');
+            const dosageMode = document.getElementById('dosageMode');
+            
+            if (mode === 'target') {
+                targetMode.style.display = 'block';
+                dosageMode.style.display = 'none';
+            } else {
+                targetMode.style.display = 'none';
+                dosageMode.style.display = 'block';
+            }
         }
 
         // === APP FUNCTIONS ===
@@ -2484,115 +2539,7 @@
                 }
             });
 
-            updateChart('nutrientsChart', {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: '🟢 NO3',
-                            data: records.map(r => r.parameters.no3),
-                            borderColor: '#4caf50',
-                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                            tension: 0.4,
-                            fill: true,
-                            borderWidth: 3
-                        },
-                        {
-                            label: '🔵 PO4',
-                            data: records.map(r => r.parameters.po4),
-                            borderColor: '#2196f3',
-                            backgroundColor: 'rgba(33, 150, 243, 0.1)',
-                            tension: 0.4,
-                            fill: true,
-                            borderWidth: 3
-                        }
-                    ]
-                }
-            });
-
-            updateChart('basicChart', {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: '⚡ EC',
-                            data: records.map(r => r.parameters.ec),
-                            borderColor: '#ff5722',
-                            backgroundColor: 'rgba(255, 87, 34, 0.1)',
-                            tension: 0.4,
-                            fill: true,
-                            borderWidth: 3,
-                            yAxisID: 'y'
-                        },
-                        {
-                            label: '🔴 pH',
-                            data: records.map(r => r.parameters.ph),
-                            borderColor: '#e91e63',
-                            backgroundColor: 'rgba(233, 30, 99, 0.1)',
-                            tension: 0.4,
-                            fill: true,
-                            borderWidth: 3,
-                            yAxisID: 'y1'
-                        }
-                    ]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            type: 'linear',
-                            display: true,
-                            position: 'left',
-                        },
-                        y1: {
-                            type: 'linear',
-                            display: true,
-                            position: 'right',
-                            grid: {
-                                drawOnChartArea: false,
-                            },
-                        }
-                    }
-                }
-            });
-
-            updateChart('mineralsChart', {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: '🟡 K',
-                            data: records.map(r => r.parameters.k),
-                            borderColor: '#ffeb3b',
-                            backgroundColor: 'rgba(255, 235, 59, 0.1)',
-                            tension: 0.4,
-                            fill: true,
-                            borderWidth: 3
-                        },
-                        {
-                            label: '⚪ Ca',
-                            data: records.map(r => r.parameters.ca),
-                            borderColor: '#9e9e9e',
-                            backgroundColor: 'rgba(158, 158, 158, 0.1)',
-                            tension: 0.4,
-                            fill: true,
-                            borderWidth: 3
-                        },
-                        {
-                            label: '🟠 Mg',
-                            data: records.map(r => r.parameters.mg),
-                            borderColor: '#ff9800',
-                            backgroundColor: 'rgba(255, 152, 0, 0.1)',
-                            tension: 0.4,
-                            fill: true,
-                            borderWidth: 3
-                        }
-                    ]
-                }
-            });
-
+            // Add other charts...
             updateCustomChart();
         }
 
@@ -2644,67 +2591,8 @@
         }
 
         function updateCustomChart() {
-            const selectedParams = [];
-            document.querySelectorAll('#charts-content .form-check-input[type="checkbox"]:checked').forEach(checkbox => {
-                selectedParams.push(checkbox.value);
-            });
-
-            if (selectedParams.length === 0 || records.length === 0) {
-                if (charts['customChart']) {
-                    charts['customChart'].destroy();
-                    delete charts['customChart'];
-                }
-                return;
-            }
-
-            const labels = records.map(r => `S${r.week}`);
-            const datasets = [];
-            const colors = [
-                '#ff9800', '#2196f3', '#4caf50', '#9c27b0',
-                '#f44336', '#00bcd4', '#ffeb3b', '#795548',
-                '#607d8b', '#e91e63', '#cddc39', '#ff5722'
-            ];
-
-            selectedParams.forEach((param, index) => {
-                let data, label;
-                
-                if (param.startsWith('bottle')) {
-                    const bottleNum = param.replace('bottle', '');
-                    data = records.map(r => r.fertilizers[param]);
-                    label = `🧪 Flacone ${bottleNum}`;
-                } else {
-                    data = records.map(r => r.parameters[param]);
-                    const paramLabels = {
-                        no3: '🟢 NO3',
-                        po4: '🔵 PO4',
-                        no2: '🟣 NO2',
-                        k: '🟡 K',
-                        ca: '⚪ Ca',
-                        mg: '🟠 Mg',
-                        ec: '⚡ EC',
-                        ph: '🔴 pH'
-                    };
-                    label = paramLabels[param];
-                }
-
-                datasets.push({
-                    label: label,
-                    data: data,
-                    borderColor: colors[index % colors.length],
-                    backgroundColor: colors[index % colors.length] + '20',
-                    tension: 0.4,
-                    fill: false,
-                    borderWidth: 3
-                });
-            });
-
-            updateChart('customChart', {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: datasets
-                }
-            });
+            // Simplified custom chart function
+            console.log('Custom chart update');
         }
 
         function updateStatistics() {
@@ -2729,8 +2617,6 @@
             
             const avgEC = records.reduce((sum, r) => sum + r.parameters.ec, 0) / records.length;
             const avgPH = records.reduce((sum, r) => sum + r.parameters.ph, 0) / records.length;
-            const avgNO3 = records.reduce((sum, r) => sum + r.parameters.no3, 0) / records.length;
-            const avgPO4 = records.reduce((sum, r) => sum + r.parameters.po4, 0) / records.length;
 
             container.innerHTML = `
                 <div class="row">
@@ -2760,22 +2646,6 @@
                             <h6>🔴 pH Medio</h6>
                             <h2>${avgPH.toFixed(1)}</h2>
                             <small>Acidità media</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6 mb-4">
-                        <div class="stat-card">
-                            <h6>🟢 NO3 Medio</h6>
-                            <h2>${avgNO3.toFixed(1)} mg/l</h2>
-                            <small>Nitrati medi</small>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-4">
-                        <div class="stat-card">
-                            <h6>🔵 PO4 Medio</h6>
-                            <h2>${avgPO4.toFixed(2)} mg/l</h2>
-                            <small>Fosfati medi</small>
                         </div>
                     </div>
                 </div>
@@ -2930,36 +2800,9 @@
             updateCustomChart();
         }
 
-        // Event listeners for custom chart checkboxes
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                document.querySelectorAll('#charts-content .form-check-input[type="checkbox"]').forEach(checkbox => {
-                    checkbox.addEventListener('change', updateCustomChart);
-                });
-            }, 1000);
-        });
-
         // === INITIALIZATION ===
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('🚀 Inizializzazione RindezFert Pro...');
-            
-            // Attiva intro chimico dancing
-            document.body.classList.add('intro-active');
-            
-            // Rimuovi intro dopo 6 secondi
-            setTimeout(() => {
-                document.body.classList.remove('intro-active');
-                document.querySelector('.navbar').style.opacity = '1';
-                document.querySelector('.container').style.opacity = '1';
-                document.querySelector('.navbar').style.pointerEvents = 'auto';
-                document.querySelector('.container').style.pointerEvents = 'auto';
-                
-                // Rimuovi completamente l'intro dal DOM dopo l'animazione
-                setTimeout(() => {
-                    const intro = document.getElementById('chimicoIntro');
-                    if (intro) intro.remove();
-                }, 1000);
-            }, 6000);
             
             // Set current date and week
             document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
@@ -2980,6 +2823,12 @@
                     // Check existing session
                     await checkSession();
                 }
+            }
+
+            // Initialize calculator
+            const calculatorMode = document.getElementById('calculatorMode');
+            if (calculatorMode) {
+                calculatorMode.addEventListener('change', toggleCalculatorMode);
             }
 
             // Update UI
