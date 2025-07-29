@@ -532,36 +532,6 @@
             font-weight: 500;
         }
 
-        /* Aquarium selector styling */
-        .aquarium-selector {
-            background: var(--glass-bg);
-            border: 2px solid var(--glass-border);
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-
-        .aquarium-card {
-            background: rgba(255, 255, 255, 0.9);
-            border: 2px solid var(--glass-border);
-            border-radius: 15px;
-            padding: 15px;
-            margin: 10px 0;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .aquarium-card:hover {
-            border-color: var(--light-green);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-soft);
-        }
-
-        .aquarium-card.active {
-            border-color: var(--light-green);
-            background: rgba(76, 175, 80, 0.1);
-        }
-
         @media (max-width: 768px) {
             .container {
                 padding-left: 10px;
@@ -720,7 +690,7 @@
             }
         }
 
-        /* === CHIMICO PAZZO DANCING INTRO === */
+        /* === CHIMICO DANCING INTRO === */
         .chimico-intro {
             position: fixed;
             top: 0;
@@ -1064,10 +1034,10 @@
         </div>
     </nav>
 
-    <!-- Chimico Pazzo Dancing Intro -->
+    <!-- Chimico Dancing Intro -->
     <div id="chimicoIntro" class="chimico-intro">
         <div class="chimico-dancing">
-            <div class="chimico-emoji">🧪🥽🔬😵‍💫</div>
+            <img src="rindez.png" alt="Chimico Dancing" class="chimico-img">
         </div>
         <div class="emoji-rain">
             <div class="emoji">🧪</div>
@@ -1088,7 +1058,7 @@
         </div>
         <div class="welcome-text">
             <h2>🎉 Benvenuto in RindezFert Pro!</h2>
-            <p>Il tuo chimico pazzo per la fertilizzazione multi-acquario!</p>
+            <p>Il tuo amico chimico per la fertilizzazione acquario</p>
         </div>
     </div>
 
@@ -1098,11 +1068,6 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="add-tab" data-bs-toggle="tab" data-bs-target="#add-record" type="button">
                     <i class="fas fa-plus-circle"></i> Nuovo Record
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="aquarium-tab" data-bs-toggle="tab" data-bs-target="#aquarium-management" type="button">
-                    <i class="fas fa-fish"></i> Acquari
                 </button>
             </li>
             <li class="nav-item" role="presentation">
@@ -1135,22 +1100,7 @@
                         <h5><i class="fas fa-plus-circle"></i> Nuovo Record Fertilizzazione</h5>
                     </div>
                     <div class="card-body">
-                        <!-- Aquarium Selector -->
-                        <div class="aquarium-selector">
-                            <h6><i class="fas fa-fish"></i> Seleziona Acquario</h6>
-                            <div id="aquariumSelector">
-                                <div class="aquarium-card active" data-aquarium-id="default">
-                                    <strong>🐠 Acquario Principale</strong>
-                                    <div>100L - Acquario predefinito</div>
-                                </div>
-                            </div>
-                            <button class="btn btn-outline-success btn-sm mt-2" onclick="showAddAquariumForm()">
-                                <i class="fas fa-plus"></i> Aggiungi Nuovo Acquario
-                            </button>
-                        </div>
-
                         <form id="recordForm">
-                            <input type="hidden" id="selectedAquarium" value="default">
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="mb-3">
@@ -1245,15 +1195,6 @@
                                 </div>
                                 <div class="col-md-3">
                                     <div class="mb-3">
-                                        <label class="form-label">💛 SO4 (mg/l)</label>
-                                        <input type="number" step="0.1" class="form-control" id="so4">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="mb-3">
                                         <label class="form-label">🔴 pH</label>
                                         <input type="number" step="0.1" class="form-control" id="ph">
                                     </div>
@@ -1270,26 +1211,6 @@
                                 <span class="loading-spinner d-none ms-2"></span>
                             </button>
                         </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Aquarium Management Tab -->
-            <div class="tab-pane fade" id="aquarium-management">
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-fish"></i> Gestione Acquari</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h6>🐠 I Tuoi Acquari (<span id="aquariumCount">1</span>)</h6>
-                            <button class="btn btn-green" onclick="showAddAquariumModal()">
-                                <i class="fas fa-plus"></i> Nuovo Acquario
-                            </button>
-                        </div>
-                        <div id="aquariumList">
-                            <!-- Populated by JavaScript -->
-                        </div>
                     </div>
                 </div>
             </div>
@@ -1488,12 +1409,7 @@
             <!-- Records List Tab -->
             <div class="tab-pane fade" id="records-list">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <div>
-                        <h5 class="section-title">📋 Storico Record (<span id="recordCount">0</span>)</h5>
-                        <select class="form-select" id="recordAquariumFilter" onchange="updateDisplay()">
-                            <option value="">Tutti gli acquari</option>
-                        </select>
-                    </div>
+                    <h5 class="section-title">📋 Storico Record (<span id="recordCount">0</span>)</h5>
                     <div>
                         <button class="btn btn-info me-2" onclick="sortRecords()">
                             <i class="fas fa-sort"></i> Ordina
@@ -1509,12 +1425,7 @@
             <!-- Charts Tab -->
             <div class="tab-pane fade" id="charts-view">
                 <div>
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="section-title">📈 Grafici Parametri</h5>
-                        <select class="form-select w-auto" id="chartAquariumFilter" onchange="updateCharts()">
-                            <option value="">Tutti gli acquari</option>
-                        </select>
-                    </div>
+                    <h5 class="section-title">📈 Grafici Parametri</h5>
                     
                     <div id="charts-loading" class="parameter-card text-center" style="display: none;">
                         <h6>📊 Caricamento grafici in corso...</h6>
@@ -1541,7 +1452,7 @@
                             </div>
                             <div class="col-md-6">
                                 <div class="parameter-card">
-                                    <h6>🌱 Nitrati, Fosfati e Solfati</h6>
+                                    <h6>🌱 Nitrati e Fosfati</h6>
                                     <div class="chart-container">
                                         <canvas id="nutrientsChart"></canvas>
                                     </div>
@@ -1612,10 +1523,6 @@
                                                     <input class="form-check-input" type="checkbox" id="customNO2" value="no2">
                                                     <label class="form-check-label" for="customNO2">🟣 NO2</label>
                                                 </div>
-                                                <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="customSO4" value="so4">
-                                                    <label class="form-check-label" for="customSO4">💛 SO4</label>
-                                                </div>
                                             </div>
                                         </div>
                                         <div class="col-md-3">
@@ -1675,12 +1582,7 @@
             <!-- Statistics Tab -->
             <div class="tab-pane fade" id="stats-view">
                 <div>
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="section-title">📊 Statistiche Avanzate</h5>
-                        <select class="form-select w-auto" id="statsAquariumFilter" onchange="updateStatistics()">
-                            <option value="">Tutti gli acquari</option>
-                        </select>
-                    </div>
+                    <h5 class="section-title">📊 Statistiche Avanzate</h5>
                     <div id="statisticsContainer">
                         <div class="parameter-card text-center">
                             <h6>🚀 Inizia ad aggiungere record per vedere statistiche dettagliate!</h6>
@@ -1716,312 +1618,8 @@
         let currentUser = null;
         let isOnline = false;
         let records = [];
-        let aquariums = [];
         let charts = {};
         let isMobile = window.innerWidth <= 768;
-        let currentAquarium = 'default';
-
-        // === SISTEMA MULTI-ACQUARIO ===
-        
-        function initializeAquariums() {
-            aquariums = [
-                {
-                    id: 'default',
-                    name: 'Acquario Principale',
-                    volume: 100,
-                    description: 'Acquario predefinito',
-                    created: new Date().toISOString()
-                }
-            ];
-            updateAquariumUI();
-        }
-
-        function showAddAquariumForm() {
-            showAddAquariumModal();
-        }
-
-        function showAddAquariumModal() {
-            if (!document.getElementById('aquariumModal')) {
-                createAquariumModal();
-            }
-            const modal = new bootstrap.Modal(document.getElementById('aquariumModal'));
-            modal.show();
-        }
-
-        function createAquariumModal() {
-            const modalHTML = `
-                <div class="modal fade" id="aquariumModal" tabindex="-1">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(20px); border-radius: 20px;">
-                            <div class="modal-header" style="background: var(--primary-gradient); border: none; border-radius: 20px 20px 0 0;">
-                                <h5 class="modal-title text-white">🐠 Nuovo Acquario</h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body p-4">
-                                <form id="aquariumForm">
-                                    <div class="mb-3">
-                                        <label class="form-label">🏷️ Nome Acquario</label>
-                                        <input type="text" class="form-control" id="aquariumName" required placeholder="es. Nano Cube 30L">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">📏 Volume (Litri)</label>
-                                        <input type="number" class="form-control" id="aquariumVolume" required min="1" placeholder="es. 30">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">📝 Descrizione (opzionale)</label>
-                                        <textarea class="form-control" id="aquariumDescription" rows="2" placeholder="es. Acquario per Caridine, Layout nature"></textarea>
-                                    </div>
-                                    <button type="submit" class="btn btn-green w-100">
-                                        <i class="fas fa-plus"></i> Crea Acquario
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-            
-            document.getElementById('aquariumForm').addEventListener('submit', function(e) {
-                e.preventDefault();
-                addAquarium();
-            });
-        }
-
-        function addAquarium() {
-            const name = document.getElementById('aquariumName').value;
-            const volume = parseInt(document.getElementById('aquariumVolume').value);
-            const description = document.getElementById('aquariumDescription').value;
-
-            const newAquarium = {
-                id: 'aq_' + Date.now(),
-                name: name,
-                volume: volume,
-                description: description || 'Nessuna descrizione',
-                created: new Date().toISOString()
-            };
-
-            aquariums.push(newAquarium);
-            updateAquariumUI();
-            
-            // Close modal
-            bootstrap.Modal.getInstance(document.getElementById('aquariumModal')).hide();
-            
-            // Reset form
-            document.getElementById('aquariumForm').reset();
-            
-            showToast(`✅ Acquario "${name}" creato!`, 'success');
-        }
-
-        function updateAquariumUI() {
-            // Update selector in add record tab
-            updateAquariumSelector();
-            
-            // Update aquarium management list
-            updateAquariumList();
-            
-            // Update filters in other tabs
-            updateAquariumFilters();
-            
-            // Update count
-            document.getElementById('aquariumCount').textContent = aquariums.length;
-        }
-
-        function updateAquariumSelector() {
-            const container = document.getElementById('aquariumSelector');
-            container.innerHTML = aquariums.map(aq => `
-                <div class="aquarium-card ${aq.id === currentAquarium ? 'active' : ''}" data-aquarium-id="${aq.id}">
-                    <strong>🐠 ${aq.name}</strong>
-                    <div>${aq.volume}L - ${aq.description}</div>
-                </div>
-            `).join('');
-
-            // Add click listeners
-            container.querySelectorAll('.aquarium-card').forEach(card => {
-                card.addEventListener('click', function() {
-                    selectAquarium(this.dataset.aquariumId);
-                });
-            });
-        }
-
-        function selectAquarium(aquariumId) {
-            currentAquarium = aquariumId;
-            document.getElementById('selectedAquarium').value = aquariumId;
-            
-            // Update UI
-            document.querySelectorAll('.aquarium-card').forEach(card => {
-                card.classList.remove('active');
-            });
-            document.querySelector(`[data-aquarium-id="${aquariumId}"]`).classList.add('active');
-            
-            // Update calculator liters
-            const aquarium = aquariums.find(aq => aq.id === aquariumId);
-            if (aquarium) {
-                document.getElementById('aquariumLiters').value = aquarium.volume;
-            }
-        }
-
-        function updateAquariumList() {
-            const container = document.getElementById('aquariumList');
-            container.innerHTML = aquariums.map(aq => {
-                const recordsCount = records.filter(r => r.aquariumId === aq.id).length;
-                return `
-                    <div class="aquarium-card">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <h6>🐠 ${aq.name}</h6>
-                                <p class="mb-1"><strong>Volume:</strong> ${aq.volume}L</p>
-                                <p class="mb-1"><strong>Descrizione:</strong> ${aq.description}</p>
-                                <p class="mb-1"><strong>Record:</strong> ${recordsCount}</p>
-                                <small class="text-muted">Creato: ${formatDate(aq.created)}</small>
-                            </div>
-                            <div class="btn-group">
-                                <button class="btn btn-outline-primary btn-sm" onclick="editAquarium('${aq.id}')" title="Modifica">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                ${aq.id !== 'default' ? `
-                                    <button class="btn btn-outline-danger btn-sm" onclick="deleteAquarium('${aq.id}')" title="Elimina">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                ` : ''}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function updateAquariumFilters() {
-            const filters = [
-                'recordAquariumFilter',
-                'chartAquariumFilter', 
-                'statsAquariumFilter'
-            ];
-
-            filters.forEach(filterId => {
-                const filter = document.getElementById(filterId);
-                if (filter) {
-                    const currentValue = filter.value;
-                    filter.innerHTML = '<option value="">Tutti gli acquari</option>' +
-                        aquariums.map(aq => 
-                            `<option value="${aq.id}">${aq.name} (${aq.volume}L)</option>`
-                        ).join('');
-                    
-                    // Restore previous selection if still valid
-                    if (currentValue && aquariums.find(aq => aq.id === currentValue)) {
-                        filter.value = currentValue;
-                    }
-                }
-            });
-        }
-
-        function editAquarium(aquariumId) {
-            const aquarium = aquariums.find(aq => aq.id === aquariumId);
-            if (!aquarium) return;
-
-            // Pre-fill modal with existing data
-            if (!document.getElementById('aquariumModal')) {
-                createAquariumModal();
-            }
-
-            document.getElementById('aquariumName').value = aquarium.name;
-            document.getElementById('aquariumVolume').value = aquarium.volume;
-            document.getElementById('aquariumDescription').value = aquarium.description;
-
-            // Change form submission to update instead of add
-            const form = document.getElementById('aquariumForm');
-            form.onsubmit = function(e) {
-                e.preventDefault();
-                updateAquarium(aquariumId);
-            };
-
-            document.querySelector('#aquariumModal .modal-title').textContent = '✏️ Modifica Acquario';
-            document.querySelector('#aquariumModal button[type="submit"]').innerHTML = '<i class="fas fa-save"></i> Salva Modifiche';
-
-            const modal = new bootstrap.Modal(document.getElementById('aquariumModal'));
-            modal.show();
-        }
-
-        function updateAquarium(aquariumId) {
-            const name = document.getElementById('aquariumName').value;
-            const volume = parseInt(document.getElementById('aquariumVolume').value);
-            const description = document.getElementById('aquariumDescription').value;
-
-            const aquarium = aquariums.find(aq => aq.id === aquariumId);
-            if (aquarium) {
-                aquarium.name = name;
-                aquarium.volume = volume;
-                aquarium.description = description || 'Nessuna descrizione';
-                
-                updateAquariumUI();
-                
-                // Close modal and reset
-                bootstrap.Modal.getInstance(document.getElementById('aquariumModal')).hide();
-                resetAquariumModal();
-                
-                showToast(`✅ Acquario "${name}" aggiornato!`, 'success');
-            }
-        }
-
-        function deleteAquarium(aquariumId) {
-            if (aquariumId === 'default') {
-                showToast('❌ Non puoi eliminare l\'acquario predefinito!', 'error');
-                return;
-            }
-
-            const aquarium = aquariums.find(aq => aq.id === aquariumId);
-            const recordsCount = records.filter(r => r.aquariumId === aquariumId).length;
-
-            if (recordsCount > 0) {
-                if (!confirm(`⚠️ L'acquario "${aquarium.name}" ha ${recordsCount} record(s). Eliminandolo, eliminerai anche tutti i record associati. Continuare?`)) {
-                    return;
-                }
-            } else {
-                if (!confirm(`Sicuro di voler eliminare l'acquario "${aquarium.name}"?`)) {
-                    return;
-                }
-            }
-
-            // Remove aquarium
-            aquariums = aquariums.filter(aq => aq.id !== aquariumId);
-            
-            // Remove associated records
-            records = records.filter(r => r.aquariumId !== aquariumId);
-            
-            // Reset current aquarium if deleted
-            if (currentAquarium === aquariumId) {
-                currentAquarium = 'default';
-            }
-
-            updateAquariumUI();
-            updateDisplay();
-            showToast(`🗑️ Acquario "${aquarium.name}" eliminato!`, 'warning');
-        }
-
-        function resetAquariumModal() {
-            document.querySelector('#aquariumModal .modal-title').textContent = '🐠 Nuovo Acquario';
-            document.querySelector('#aquariumModal button[type="submit"]').innerHTML = '<i class="fas fa-plus"></i> Crea Acquario';
-            
-            const form = document.getElementById('aquariumForm');
-            form.onsubmit = function(e) {
-                e.preventDefault();
-                addAquarium();
-            };
-        }
-
-        function getFilteredRecords(filterId = null) {
-            let filteredRecords = records;
-            
-            if (filterId) {
-                const filter = document.getElementById(filterId);
-                if (filter && filter.value) {
-                    filteredRecords = records.filter(r => r.aquariumId === filter.value);
-                }
-            }
-            
-            return filteredRecords;
-        }
 
         // === SISTEMA AUTENTICAZIONE SEMPLIFICATO ===
         
@@ -2420,7 +2018,6 @@
                 if (data && data.length > 0) {
                     records = data.map(record => ({
                         id: record.id,
-                        aquariumId: record.aquarium_id || 'default',
                         date: record.date,
                         week: record.week,
                         fertilizers: {
@@ -2437,7 +2034,6 @@
                             k: record.k || 0,
                             ca: record.ca || 0,
                             mg: record.mg || 0,
-                            so4: record.so4 || 0,
                             ph: record.ph || 0
                         },
                         notes: record.notes || ''
@@ -2461,7 +2057,6 @@
                 try {
                     const dbRecord = {
                         user_id: currentUser.id,
-                        aquarium_id: record.aquariumId,
                         date: record.date,
                         week: record.week,
                         bottle1: record.fertilizers.bottle1,
@@ -2475,7 +2070,6 @@
                         k: record.parameters.k,
                         ca: record.parameters.ca,
                         mg: record.parameters.mg,
-                        so4: record.parameters.so4,
                         ph: record.parameters.ph,
                         notes: record.notes
                     };
@@ -2714,7 +2308,6 @@
             try {
                 // Build record
                 const record = {
-                    aquariumId: document.getElementById('selectedAquarium').value,
                     date: document.getElementById('recordDate').value,
                     week: parseInt(document.getElementById('week').value),
                     fertilizers: {
@@ -2731,7 +2324,6 @@
                         k: parseFloat(document.getElementById('k').value) || 0,
                         ca: parseFloat(document.getElementById('ca').value) || 0,
                         mg: parseFloat(document.getElementById('mg').value) || 0,
-                        so4: parseFloat(document.getElementById('so4').value) || 0,
                         ph: parseFloat(document.getElementById('ph').value) || 0
                     },
                     notes: document.getElementById('notes').value
@@ -2765,15 +2357,13 @@
             updateRecordsList();
             updateCharts();
             updateStatistics();
-            const filteredRecords = getFilteredRecords();
-            document.getElementById('recordCount').textContent = filteredRecords.length;
+            document.getElementById('recordCount').textContent = records.length;
         }
 
         function updateRecordsList() {
             const container = document.getElementById('recordsList');
-            const filteredRecords = getFilteredRecords('recordAquariumFilter');
             
-            if (filteredRecords.length === 0) {
+            if (records.length === 0) {
                 container.innerHTML = `
                     <div class="parameter-card text-center">
                         <h6>🌱 Nessun record presente</h6>
@@ -2786,55 +2376,46 @@
                 return;
             }
 
-            container.innerHTML = filteredRecords.map((record, index) => {
-                const aquarium = aquariums.find(aq => aq.id === record.aquariumId);
-                const aquariumName = aquarium ? aquarium.name : 'Acquario sconosciuto';
-                
-                return `
-                    <div class="record-item" style="animation-delay: ${index * 0.1}s">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <h6>📅 ${formatDate(record.date)} - Settimana ${record.week}</h6>
-                                <p class="mb-2"><strong>🐠 Acquario:</strong> ${aquariumName}</p>
-                                <div class="row">
-                                    <div class="col-md-4">
-                                        <strong>🧪 Fertilizzanti:</strong><br>
-                                        🟡 Flacone 1: ${record.fertilizers.bottle1} ml<br>
-                                        🔵 Flacone 2: ${record.fertilizers.bottle2} ml<br>
-                                        🟢 Flacone 3: ${record.fertilizers.bottle3} ml<br>
-                                        🟠 Flacone 4: ${record.fertilizers.bottle4} ml
-                                    </div>
-                                    <div class="col-md-4">
-                                        <strong>🧪 Parametri principali:</strong><br>
-                                        ⚡ EC: ${record.parameters.ec} μS/cm<br>
-                                        🔴 pH: ${record.parameters.ph}<br>
-                                        🟢 NO3: ${record.parameters.no3} mg/l<br>
-                                        🔵 PO4: ${record.parameters.po4} mg/l
-                                    </div>
-                                    <div class="col-md-4">
-                                        <strong>🔬 Minerali e Altri:</strong><br>
-                                        🟡 K: ${record.parameters.k} mg/l<br>
-                                        ⚪ Ca: ${record.parameters.ca} mg/l<br>
-                                        🟠 Mg: ${record.parameters.mg} mg/l<br>
-                                        💛 SO4: ${record.parameters.so4} mg/l<br>
-                                        🟣 NO2: ${record.parameters.no2} mg/l
-                                    </div>
+            container.innerHTML = records.map((record, index) => `
+                <div class="record-item" style="animation-delay: ${index * 0.1}s">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h6>📅 ${formatDate(record.date)} - Settimana ${record.week}</h6>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <strong>🧪 Fertilizzanti:</strong><br>
+                                    🟡 Flacone 1: ${record.fertilizers.bottle1} ml<br>
+                                    🔵 Flacone 2: ${record.fertilizers.bottle2} ml<br>
+                                    🟢 Flacone 3: ${record.fertilizers.bottle3} ml<br>
+                                    🟠 Flacone 4: ${record.fertilizers.bottle4} ml
                                 </div>
-                                ${record.notes ? `<div class="mt-2"><strong>📝 Note:</strong> ${record.notes}</div>` : ''}
+                                <div class="col-md-4">
+                                    <strong>🧪 Parametri principali:</strong><br>
+                                    ⚡ EC: ${record.parameters.ec} μS/cm<br>
+                                    🔴 pH: ${record.parameters.ph}<br>
+                                    🟢 NO3: ${record.parameters.no3} mg/l<br>
+                                    🔵 PO4: ${record.parameters.po4} mg/l
+                                </div>
+                                <div class="col-md-4">
+                                    <strong>🔬 Minerali:</strong><br>
+                                    🟡 K: ${record.parameters.k} mg/l<br>
+                                    ⚪ Ca: ${record.parameters.ca} mg/l<br>
+                                    🟠 Mg: ${record.parameters.mg} mg/l<br>
+                                    🟣 NO2: ${record.parameters.no2} mg/l
+                                </div>
                             </div>
-                            <button class="btn btn-danger btn-sm" onclick="deleteRecord('${record.id}')" title="Elimina record">
-                                <i class="fas fa-trash"></i>
-                            </button>
+                            ${record.notes ? `<div class="mt-2"><strong>📝 Note:</strong> ${record.notes}</div>` : ''}
                         </div>
+                        <button class="btn btn-danger btn-sm" onclick="deleteRecord('${record.id}')" title="Elimina record">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
-                `;
-            }).join('');
+                </div>
+            `).join('');
         }
 
         function updateCharts() {
-            const filteredRecords = getFilteredRecords('chartAquariumFilter');
-            
-            if (filteredRecords.length === 0) return;
+            if (records.length === 0) return;
             
             const loadingEl = document.getElementById('charts-loading');
             const errorEl = document.getElementById('charts-error');
@@ -2856,7 +2437,7 @@
                 if (contentEl) contentEl.style.display = 'block';
             }, 500);
 
-            const labels = filteredRecords.map(r => `S${r.week}`);
+            const labels = records.map(r => `S${r.week}`);
             
             updateChart('fertilizersChart', {
                 type: 'line',
@@ -2865,7 +2446,7 @@
                     datasets: [
                         {
                             label: '🟡 Flacone 1',
-                            data: filteredRecords.map(r => r.fertilizers.bottle1),
+                            data: records.map(r => r.fertilizers.bottle1),
                             borderColor: '#ff9800',
                             backgroundColor: 'rgba(255, 152, 0, 0.1)',
                             tension: 0.4,
@@ -2874,7 +2455,7 @@
                         },
                         {
                             label: '🔵 Flacone 2',
-                            data: filteredRecords.map(r => r.fertilizers.bottle2),
+                            data: records.map(r => r.fertilizers.bottle2),
                             borderColor: '#2196f3',
                             backgroundColor: 'rgba(33, 150, 243, 0.1)',
                             tension: 0.4,
@@ -2883,7 +2464,7 @@
                         },
                         {
                             label: '🟢 Flacone 3',
-                            data: filteredRecords.map(r => r.fertilizers.bottle3),
+                            data: records.map(r => r.fertilizers.bottle3),
                             borderColor: '#4caf50',
                             backgroundColor: 'rgba(76, 175, 80, 0.1)',
                             tension: 0.4,
@@ -2892,7 +2473,7 @@
                         },
                         {
                             label: '🟠 Flacone 4',
-                            data: filteredRecords.map(r => r.fertilizers.bottle4),
+                            data: records.map(r => r.fertilizers.bottle4),
                             borderColor: '#9c27b0',
                             backgroundColor: 'rgba(156, 39, 176, 0.1)',
                             tension: 0.4,
@@ -2910,7 +2491,7 @@
                     datasets: [
                         {
                             label: '🟢 NO3',
-                            data: filteredRecords.map(r => r.parameters.no3),
+                            data: records.map(r => r.parameters.no3),
                             borderColor: '#4caf50',
                             backgroundColor: 'rgba(76, 175, 80, 0.1)',
                             tension: 0.4,
@@ -2919,18 +2500,9 @@
                         },
                         {
                             label: '🔵 PO4',
-                            data: filteredRecords.map(r => r.parameters.po4),
+                            data: records.map(r => r.parameters.po4),
                             borderColor: '#2196f3',
                             backgroundColor: 'rgba(33, 150, 243, 0.1)',
-                            tension: 0.4,
-                            fill: true,
-                            borderWidth: 3
-                        },
-                        {
-                            label: '💛 SO4',
-                            data: filteredRecords.map(r => r.parameters.so4),
-                            borderColor: '#ffeb3b',
-                            backgroundColor: 'rgba(255, 235, 59, 0.1)',
                             tension: 0.4,
                             fill: true,
                             borderWidth: 3
@@ -2946,7 +2518,7 @@
                     datasets: [
                         {
                             label: '⚡ EC',
-                            data: filteredRecords.map(r => r.parameters.ec),
+                            data: records.map(r => r.parameters.ec),
                             borderColor: '#ff5722',
                             backgroundColor: 'rgba(255, 87, 34, 0.1)',
                             tension: 0.4,
@@ -2956,7 +2528,7 @@
                         },
                         {
                             label: '🔴 pH',
-                            data: filteredRecords.map(r => r.parameters.ph),
+                            data: records.map(r => r.parameters.ph),
                             borderColor: '#e91e63',
                             backgroundColor: 'rgba(233, 30, 99, 0.1)',
                             tension: 0.4,
@@ -2992,7 +2564,7 @@
                     datasets: [
                         {
                             label: '🟡 K',
-                            data: filteredRecords.map(r => r.parameters.k),
+                            data: records.map(r => r.parameters.k),
                             borderColor: '#ffeb3b',
                             backgroundColor: 'rgba(255, 235, 59, 0.1)',
                             tension: 0.4,
@@ -3001,7 +2573,7 @@
                         },
                         {
                             label: '⚪ Ca',
-                            data: filteredRecords.map(r => r.parameters.ca),
+                            data: records.map(r => r.parameters.ca),
                             borderColor: '#9e9e9e',
                             backgroundColor: 'rgba(158, 158, 158, 0.1)',
                             tension: 0.4,
@@ -3010,7 +2582,7 @@
                         },
                         {
                             label: '🟠 Mg',
-                            data: filteredRecords.map(r => r.parameters.mg),
+                            data: records.map(r => r.parameters.mg),
                             borderColor: '#ff9800',
                             backgroundColor: 'rgba(255, 152, 0, 0.1)',
                             tension: 0.4,
@@ -3077,9 +2649,7 @@
                 selectedParams.push(checkbox.value);
             });
 
-            const filteredRecords = getFilteredRecords('chartAquariumFilter');
-
-            if (selectedParams.length === 0 || filteredRecords.length === 0) {
+            if (selectedParams.length === 0 || records.length === 0) {
                 if (charts['customChart']) {
                     charts['customChart'].destroy();
                     delete charts['customChart'];
@@ -3087,7 +2657,7 @@
                 return;
             }
 
-            const labels = filteredRecords.map(r => `S${r.week}`);
+            const labels = records.map(r => `S${r.week}`);
             const datasets = [];
             const colors = [
                 '#ff9800', '#2196f3', '#4caf50', '#9c27b0',
@@ -3100,15 +2670,14 @@
                 
                 if (param.startsWith('bottle')) {
                     const bottleNum = param.replace('bottle', '');
-                    data = filteredRecords.map(r => r.fertilizers[param]);
+                    data = records.map(r => r.fertilizers[param]);
                     label = `🧪 Flacone ${bottleNum}`;
                 } else {
-                    data = filteredRecords.map(r => r.parameters[param]);
+                    data = records.map(r => r.parameters[param]);
                     const paramLabels = {
                         no3: '🟢 NO3',
                         po4: '🔵 PO4',
                         no2: '🟣 NO2',
-                        so4: '💛 SO4',
                         k: '🟡 K',
                         ca: '⚪ Ca',
                         mg: '🟠 Mg',
@@ -3140,9 +2709,8 @@
 
         function updateStatistics() {
             const container = document.getElementById('statisticsContainer');
-            const filteredRecords = getFilteredRecords('statsAquariumFilter');
             
-            if (filteredRecords.length < 3) {
+            if (records.length < 3) {
                 container.innerHTML = `
                     <div class="parameter-card text-center">
                         <h6>📊 Statistiche disponibili con almeno 3 record</h6>
@@ -3156,21 +2724,20 @@
             }
 
             // Calculate basic stats
-            const avgFertilizers = filteredRecords.reduce((sum, r) => 
-                sum + r.fertilizers.bottle1 + r.fertilizers.bottle2 + r.fertilizers.bottle3 + r.fertilizers.bottle4, 0) / filteredRecords.length;
+            const avgFertilizers = records.reduce((sum, r) => 
+                sum + r.fertilizers.bottle1 + r.fertilizers.bottle2 + r.fertilizers.bottle3 + r.fertilizers.bottle4, 0) / records.length;
             
-            const avgEC = filteredRecords.reduce((sum, r) => sum + r.parameters.ec, 0) / filteredRecords.length;
-            const avgPH = filteredRecords.reduce((sum, r) => sum + r.parameters.ph, 0) / filteredRecords.length;
-            const avgNO3 = filteredRecords.reduce((sum, r) => sum + r.parameters.no3, 0) / filteredRecords.length;
-            const avgPO4 = filteredRecords.reduce((sum, r) => sum + r.parameters.po4, 0) / filteredRecords.length;
-            const avgSO4 = filteredRecords.reduce((sum, r) => sum + r.parameters.so4, 0) / filteredRecords.length;
+            const avgEC = records.reduce((sum, r) => sum + r.parameters.ec, 0) / records.length;
+            const avgPH = records.reduce((sum, r) => sum + r.parameters.ph, 0) / records.length;
+            const avgNO3 = records.reduce((sum, r) => sum + r.parameters.no3, 0) / records.length;
+            const avgPO4 = records.reduce((sum, r) => sum + r.parameters.po4, 0) / records.length;
 
             container.innerHTML = `
                 <div class="row">
                     <div class="col-md-3 mb-4">
                         <div class="stat-card">
                             <h6>📊 Totale Record</h6>
-                            <h2>${filteredRecords.length}</h2>
+                            <h2>${records.length}</h2>
                             <small>Record inseriti</small>
                         </div>
                     </div>
@@ -3197,25 +2764,18 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-md-4 mb-4">
+                    <div class="col-md-6 mb-4">
                         <div class="stat-card">
                             <h6>🟢 NO3 Medio</h6>
                             <h2>${avgNO3.toFixed(1)} mg/l</h2>
                             <small>Nitrati medi</small>
                         </div>
                     </div>
-                    <div class="col-md-4 mb-4">
+                    <div class="col-md-6 mb-4">
                         <div class="stat-card">
                             <h6>🔵 PO4 Medio</h6>
                             <h2>${avgPO4.toFixed(2)} mg/l</h2>
                             <small>Fosfati medi</small>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-4">
-                        <div class="stat-card">
-                            <h6>💛 SO4 Medio</h6>
-                            <h2>${avgSO4.toFixed(1)} mg/l</h2>
-                            <small>Solfati medi</small>
                         </div>
                     </div>
                 </div>
@@ -3255,17 +2815,10 @@
                 return;
             }
 
-            const exportData = {
-                records: records,
-                aquariums: aquariums,
-                exportDate: new Date().toISOString(),
-                version: '2.0'
-            };
-
-            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataStr = JSON.stringify(records, null, 2);
             const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
             
-            const exportFileDefaultName = `RindezFert_MultiAcquario_${new Date().toISOString().split('T')[0]}.json`;
+            const exportFileDefaultName = `RindezFert_${new Date().toISOString().split('T')[0]}.json`;
             
             const linkElement = document.createElement('a');
             linkElement.setAttribute('href', dataUri);
@@ -3287,22 +2840,8 @@
             reader.onload = function(event) {
                 try {
                     const importedData = JSON.parse(event.target.result);
-                    
-                    if (importedData.version === '2.0') {
-                        // New format with aquariums
-                        records = importedData.records || [];
-                        if (importedData.aquariums) {
-                            aquariums = importedData.aquariums;
-                        }
-                        updateAquariumUI();
-                        updateDisplay();
-                        showToast(`✅ Importati ${records.length} record e ${aquariums.length} acquari!`, 'success');
-                    } else if (Array.isArray(importedData)) {
-                        // Old format - just records
-                        records = importedData.map(record => ({
-                            ...record,
-                            aquariumId: record.aquariumId || 'default'
-                        }));
+                    if (Array.isArray(importedData)) {
+                        records = importedData;
                         updateDisplay();
                         showToast(`✅ Importati ${records.length} record!`, 'success');
                     } else {
@@ -3323,19 +2862,6 @@
             const sampleRecords = [];
             const numRecords = 12;
             
-            // Add a sample aquarium
-            const sampleAquarium = {
-                id: 'sample_aq',
-                name: 'Acquario Demo',
-                volume: 80,
-                description: 'Acquario di esempio per demo',
-                created: new Date().toISOString()
-            };
-            
-            if (!aquariums.find(aq => aq.id === 'sample_aq')) {
-                aquariums.push(sampleAquarium);
-            }
-            
             for (let i = 0; i < numRecords; i++) {
                 const recordDate = new Date(baseDate);
                 recordDate.setDate(recordDate.getDate() + (i * 7));
@@ -3345,7 +2871,6 @@
                 
                 sampleRecords.push({
                     id: Date.now() + i,
-                    aquariumId: i % 3 === 0 ? 'sample_aq' : 'default',
                     date: recordDate.toISOString().split('T')[0],
                     week: week,
                     fertilizers: {
@@ -3362,7 +2887,6 @@
                         k: Math.round(Math.random() * 5 + 15),
                         ca: Math.round(Math.random() * 10 + 35),
                         mg: Math.round(Math.random() * 3 + 7),
-                        so4: Math.round(Math.random() * 15 + 20),
                         ph: parseFloat((Math.random() * 0.5 + 6.5).toFixed(1))
                     },
                     notes: [
@@ -3377,7 +2901,6 @@
             }
             
             records = sampleRecords;
-            updateAquariumUI();
             updateDisplay();
             showToast(`✅ Generati ${numRecords} record demo!`, 'success');
         }
@@ -3399,7 +2922,7 @@
 
         function selectDefaultCustomChart() {
             clearAllCustomChart();
-            const defaultParams = ['bottle1', 'bottle2', 'no3', 'po4', 'so4', 'ec', 'ph'];
+            const defaultParams = ['bottle1', 'bottle2', 'no3', 'po4', 'ec', 'ph'];
             defaultParams.forEach(param => {
                 const checkbox = document.querySelector(`#charts-content input[value="${param}"]`);
                 if (checkbox) checkbox.checked = true;
@@ -3418,7 +2941,7 @@
 
         // === INITIALIZATION ===
         document.addEventListener('DOMContentLoaded', async function() {
-            console.log('🚀 Inizializzazione RindezFert Pro Multi-Acquario...');
+            console.log('🚀 Inizializzazione RindezFert Pro...');
             
             // Attiva intro chimico dancing
             document.body.classList.add('intro-active');
@@ -3437,9 +2960,6 @@
                     if (intro) intro.remove();
                 }, 1000);
             }, 6000);
-            
-            // Initialize aquariums
-            initializeAquariums();
             
             // Set current date and week
             document.getElementById('recordDate').value = new Date().toISOString().split('T')[0];
